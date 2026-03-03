@@ -11,3 +11,5 @@ export interface CanvasState {
     height: number;
     pixels: Color[][];
 }
+
+export type Tool = 'pencil' | 'eraser' | 'picker';
