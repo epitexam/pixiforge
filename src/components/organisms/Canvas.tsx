@@ -26,18 +26,19 @@ export const Canvas: React.FC<CanvasProps> = ({
 
     const handlePixelAction = (x: number, y: number) => {
         switch (activeTool) {
-            case 'pencil':
+            case 'pencil': {
                 setPixel(x, y, currentColor);
                 break;
-            case 'eraser':
+            }
+            case 'eraser': {
                 setPixel(x, y, '#FFFFFF');
                 break;
-            case 'picker':
+            }
+            case 'picker': {
                 const color = getPixel(x, y);
-                if (color) {
-                    setCurrentColor(color);
-                }
+                if (color) setCurrentColor(color);
                 break;
+            }
             default:
                 break;
         }
@@ -49,43 +50,31 @@ export const Canvas: React.FC<CanvasProps> = ({
     };
 
     const handleMouseEnter = (x: number, y: number) => {
-        if (isDrawing) {
-            handlePixelAction(x, y);
-        }
+        if (isDrawing) handlePixelAction(x, y);
     };
 
     useEffect(() => {
-        const handleGlobalMouseUp = () => {
-            setIsDrawing(false);
-        };
+        const handleGlobalMouseUp = () => setIsDrawing(false);
         window.addEventListener('mouseup', handleGlobalMouseUp);
-        return () => {
-            window.removeEventListener('mouseup', handleGlobalMouseUp);
-        };
+        return () => window.removeEventListener('mouseup', handleGlobalMouseUp);
     }, []);
 
     useEffect(() => {
         const preventDrag = (e: Event) => e.preventDefault();
-        const canvasElement = canvasRef.current;
-        if (canvasElement) {
-            canvasElement.addEventListener('dragstart', preventDrag);
-        }
-        return () => {
-            if (canvasElement) {
-                canvasElement.removeEventListener('dragstart', preventDrag);
-            }
-        };
+        const el = canvasRef.current;
+        if (el) el.addEventListener('dragstart', preventDrag);
+        return () => { if (el) el.removeEventListener('dragstart', preventDrag); };
     }, []);
 
     return (
         <div
             ref={canvasRef}
-            className={`canvas ${className}`}
+            className={`select-none ${className}`}
             style={{
                 display: 'grid',
                 gridTemplateColumns: `repeat(${effectiveWidth}, ${cellSize}px)`,
+                outline: '1px solid rgba(255,255,255,0.06)',
                 gap: 0,
-                userSelect: 'none',
             }}
         >
             {Array.from({ length: effectiveHeight }).map((_, y) =>

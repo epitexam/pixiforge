@@ -24,37 +24,20 @@ export const Pixel: React.FC<PixelProps> = ({
     onMouseLeave,
     className = '',
 }) => {
-    const handleClick = () => {
-        onClick?.(x, y);
-    };
-
-    const handleMouseDown = () => {
-        onMouseDown?.(x, y);
-    };
-
-    const handleMouseEnter = () => {
-        onMouseEnter?.(x, y);
-    };
-
-    const handleMouseLeave = () => {
-        onMouseLeave?.(x, y);
-    };
-
     return (
         <div
-            className={`pixel ${className}`}
+            className={`box-border inline-block ${className}`}
             style={{
                 width: size,
                 height: size,
                 backgroundColor: color,
-                boxSizing: 'border-box',
-                border: '1px solid rgba(0, 0, 0, 0.1)',
-                display: 'inline-block',
+                borderRight: '1px solid rgba(0,0,0,0.08)',
+                borderBottom: '1px solid rgba(0,0,0,0.08)',
             }}
-            onClick={handleClick}
-            onMouseDown={handleMouseDown}
-            onMouseEnter={handleMouseEnter}
-            onMouseLeave={handleMouseLeave}
+            onClick={() => onClick?.(x, y)}
+            onMouseDown={() => onMouseDown?.(x, y)}
+            onMouseEnter={() => onMouseEnter?.(x, y)}
+            onMouseLeave={() => onMouseLeave?.(x, y)}
             role="gridcell"
             aria-label={`Pixel at (${x}, ${y})`}
         />

@@ -9,15 +9,12 @@ export interface MenuBarProps {
 export const MenuBar: React.FC<MenuBarProps> = ({ className = '' }) => {
     const { clearCanvas, setAllPixels } = useCanvasStore();
 
-    const handleNew = () => {
-        clearCanvas();
-    };
+    const handleNew = () => clearCanvas();
 
     const handleOpen = async () => {
         try {
             const result = await invoke<{ path?: string; content: string }>('open_file');
             const data = JSON.parse(result.content);
-
             if (data.pixels && Array.isArray(data.pixels)) {
                 setAllPixels(data.pixels);
             } else {
@@ -32,20 +29,12 @@ export const MenuBar: React.FC<MenuBarProps> = ({ className = '' }) => {
     const handleSave = async () => {
         try {
             const { width, height, pixels } = useCanvasStore.getState();
-            const data = {
-                version: '1.0',
-                width,
-                height,
-                pixels,
-            };
-
+            const data = { version: '1.0', width, height, pixels };
             const jsonContent = JSON.stringify(data, null, 2);
-
             const savedPath = await invoke<string>('save_file', {
                 content: jsonContent,
                 defaultPath: 'untitled.pixi',
             });
-
             console.log('Saved to:', savedPath);
         } catch (error) {
             console.error('Save failed:', error);
@@ -53,48 +42,38 @@ export const MenuBar: React.FC<MenuBarProps> = ({ className = '' }) => {
         }
     };
 
-    return (
-        <div
-            className={`menubar ${className}`}
-            style={{
-                display: 'flex',
-                gap: '8px',
-                padding: '8px',
-                backgroundColor: '#2d2d2d',
-                borderRadius: '4px',
-                marginBottom: '10px',
-            }}
-        >
-            <button
-                onClick={handleNew}
-                style={buttonStyle}
-            >
-                New
-            </button>
-            <button
-                onClick={handleOpen}
-                style={buttonStyle}
-            >
-                Open
-            </button>
-            <button
-                onClick={handleSave}
-                style={buttonStyle}
-            >
-                Save
-            </button>
-        </div>
-    );
-};
+    const menuItems = [
+        { label: 'File', children: [
+            { label: 'New', action: handleNew, shortcut: 'Ctrl+N' },
+            { label: 'Open', action: handleOpen, shortcut: 'Ctrl+O' },
+            { label: 'Save', action: handleSave, shortcut: 'Ctrl+S' },
+        ]},
+    ];
 
-const buttonStyle: React.CSSProperties = {
-    padding: '6px 12px',
-    backgroundColor: '#4a4a4a',
-    color: 'white',
-    border: 'none',
-    borderRadius: '4px',
-    cursor: 'pointer',
-    fontSize: '14px',
+    return (
+        <nav className={`flex items-stretch h-full ${className}`}>
+            <div className="flex items-center px-4 border-r border-[#2a2a2a]">
+                <span className="text-[11px] font-bold tracking-[0.25em] text-[#4a9eff] uppercase">
+                    Pixi
+                </span>
+            </div>
+
+            <div className="flex items-stretch">
+                {menuItems[0].children.map((item) => (
+                    <button
+                        key={item.label}
+                        onClick={item.action}
+                        className="px-4 text-[12px] text-[#888] hover:text-[#ddd] hover:bg-[#1f1f1f]
+                                   border-r border-[#1a1a1a] transition-colors duration-100
+                                   tracking-wider cursor-pointer"
+                        title={item.shortcut}
+                    >
+                        {item.label}
+                    </button>
+                ))}
+            </div>
+        </nav>
+    );
 };
 
 export default MenuBar;
