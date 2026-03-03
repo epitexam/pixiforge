@@ -13,3 +13,8 @@ export interface CanvasState {
 }
 
 export type Tool = 'pencil' | 'eraser' | 'picker';
+
+export interface ToolState {
+    activeTool: Tool;
+    currentColor: Color;
+}
