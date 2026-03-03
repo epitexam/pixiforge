@@ -7,6 +7,7 @@ export interface PixelProps {
     x: number;
     y: number;
     onClick?: (x: number, y: number) => void;
+    onMouseDown?: (x: number, y: number) => void;
     onMouseEnter?: (x: number, y: number) => void;
     onMouseLeave?: (x: number, y: number) => void;
     className?: string;
@@ -18,12 +19,17 @@ export const Pixel: React.FC<PixelProps> = ({
     x,
     y,
     onClick,
+    onMouseDown,
     onMouseEnter,
     onMouseLeave,
     className = '',
 }) => {
     const handleClick = () => {
         onClick?.(x, y);
+    };
+
+    const handleMouseDown = () => {
+        onMouseDown?.(x, y);
     };
 
     const handleMouseEnter = () => {
@@ -46,6 +52,7 @@ export const Pixel: React.FC<PixelProps> = ({
                 display: 'inline-block',
             }}
             onClick={handleClick}
+            onMouseDown={handleMouseDown}
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
             role="gridcell"
