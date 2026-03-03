@@ -1,19 +1,18 @@
 import { create } from 'zustand';
-import { Tool, Color } from '../types';
+import { Color } from '../types';
 
-const DEFAULT_COLOR: Color = '#000000';
-const DEFAULT_TOOL: Tool = 'pencil';
+export type Tool = 'pencil' | 'eraser' | 'picker';
 
 interface ToolStore {
     activeTool: Tool;
     currentColor: Color;
-    setTool: (tool: Tool) => void;
-    setColor: (color: Color) => void;
+    setActiveTool: (tool: Tool) => void;
+    setCurrentColor: (color: Color) => void;
 }
 
 export const useToolStore = create<ToolStore>((set) => ({
-    activeTool: DEFAULT_TOOL,
-    currentColor: DEFAULT_COLOR,
-    setTool: (tool) => set({ activeTool: tool }),
-    setColor: (color) => set({ currentColor: color }),
+    activeTool: 'pencil',
+    currentColor: '#FF0000',
+    setActiveTool: (tool) => set({ activeTool: tool }),
+    setCurrentColor: (color) => set({ currentColor: color }),
 }));
