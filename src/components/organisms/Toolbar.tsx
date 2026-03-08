@@ -10,6 +10,7 @@ const TOOLS: { id: Tool; label: string; icon: string; shortcut: string }[] = [
     { id: 'pencil', label: 'Pencil', icon: '✏', shortcut: 'B' },
     { id: 'eraser', label: 'Eraser', icon: '◻', shortcut: 'E' },
     { id: 'picker', label: 'Picker', icon: '✦', shortcut: 'I' },
+    { id: 'select', label: 'Select', icon: '▭', shortcut: 'S' },
 ];
 
 export const Toolbar: React.FC<ToolbarProps> = ({
