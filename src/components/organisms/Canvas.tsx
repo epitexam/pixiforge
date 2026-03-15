@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, WheelEvent, useCallback, useImperativeHandle, forwardRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useImperativeHandle, forwardRef, useMemo } from 'react';
 import { useToolStore } from '../../stores/toolStore';
 import { Color } from '../../types';
 import { useCanvasStore } from '../../stores/canvaStore';
@@ -45,10 +45,11 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(({
     const { width: storeWidth, height: storeHeight, pixels, setPixel, getPixel } = useCanvasStore();
     const { activeTool, currentColor, setCurrentColor } = useToolStore();
 
-    const effectiveWidth = propWidth ?? storeWidth;
-    const effectiveHeight = propHeight ?? storeHeight;
+    // Dimensions effectives (mémorisées)
+    const effectiveWidth = useMemo(() => propWidth ?? storeWidth, [propWidth, storeWidth]);
+    const effectiveHeight = useMemo(() => propHeight ?? storeHeight, [propHeight, storeHeight]);
 
-    // État interne pour zoom/pan (si non contrôlé)
+    // Gestion interne du zoom/pan
     const [internalScale, setInternalScale] = useState(1);
     const [internalTranslateX, setInternalTranslateX] = useState(0);
     const [internalTranslateY, setInternalTranslateY] = useState(0);
@@ -57,15 +58,13 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(({
     const translateX = externalTranslateX !== undefined ? externalTranslateX : internalTranslateX;
     const translateY = externalTranslateY !== undefined ? externalTranslateY : internalTranslateY;
 
-    // États pour la sélection et le dessin
+    // États
     const [isDrawing, setIsDrawing] = useState(false);
     const [isSelecting, setIsSelecting] = useState(false);
     const [selectionStart, setSelectionStart] = useState<{ x: number; y: number } | null>(null);
     const [selectionEnd, setSelectionEnd] = useState<{ x: number; y: number } | null>(null);
     const [selectionRect, setSelectionRect] = useState<Rect | null>(null);
     const [copiedPixels, setCopiedPixels] = useState<Color[][] | null>(null);
-
-    // États pour le pan
     const [isPanning, setIsPanning] = useState(false);
     const [lastPanPoint, setLastPanPoint] = useState<{ x: number; y: number } | null>(null);
 
@@ -74,7 +73,7 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(({
     const containerRef = useRef<HTMLDivElement>(null);
     const lastMousePosRef = useRef<{ clientX: number; clientY: number } | null>(null);
 
-    // --- Dessin du canvas ---
+    // --- Rendu des pixels (déclenché par changement de pixels ou de zoom/pan) ---
     useEffect(() => {
         const canvas = canvasRef.current;
         if (!canvas) return;
@@ -82,29 +81,41 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(({
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
 
-        // Ajuster la taille physique du canvas (en pixels)
+        // Redimensionner le canvas physique
         canvas.width = effectiveWidth * cellSize;
         canvas.height = effectiveHeight * cellSize;
 
-        // Appliquer les transformations (zoom + pan)
+        // Appliquer transformation
         ctx.setTransform(scale, 0, 0, scale, translateX, translateY);
 
-        // Dessiner chaque pixel
+        // Dessiner les pixels
         for (let y = 0; y < effectiveHeight; y++) {
             for (let x = 0; x < effectiveWidth; x++) {
-                const color = pixels[y]?.[x] ?? '#FFFFFF';
+                const index = y * effectiveWidth + x;
+                const color = pixels[index] ?? '#FFFFFF';
                 ctx.fillStyle = color;
                 ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
             }
         }
+    }, [pixels, effectiveWidth, effectiveHeight, cellSize, scale, translateX]);
 
-        // Dessiner la grille avec une épaisseur constante en pixels écran
+    // --- Rendu de la grille (déclenché uniquement par zoom/pan, pas par les pixels) ---
+    useEffect(() => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        // Sauvegarder l'état actuel
         ctx.save();
+        // Dessiner la grille en coordonnées écran
         ctx.setTransform(1, 0, 0, 1, 0, 0);
 
         ctx.strokeStyle = 'rgba(100, 100, 100, 0.3)';
         ctx.lineWidth = 1;
 
+        // Lignes horizontales
         for (let y = 0; y <= effectiveHeight; y++) {
             const yPos = y * cellSize * scale + translateY;
             ctx.beginPath();
@@ -123,9 +134,9 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(({
         }
 
         ctx.restore();
-    }, [pixels, effectiveWidth, effectiveHeight, cellSize, scale, translateX]);
+    }, [effectiveWidth, effectiveHeight, cellSize, scale, translateX, translateY]);
 
-    // --- Gestion des événements souris ---
+    // --- Conversion des coordonnées ---
     const getPixelIndexFromEvent = useCallback((clientX: number, clientY: number): { x: number; y: number } | null => {
         const rect = containerRef.current?.getBoundingClientRect();
         if (!rect) return null;
@@ -133,7 +144,6 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(({
         const containerX = clientX - rect.left;
         const containerY = clientY - rect.top;
 
-        // Coordonnées dans l'espace du canvas (avant transformation)
         const transformedX = (containerX - translateX) / scale;
         const transformedY = (containerY - translateY) / scale;
 
@@ -152,7 +162,8 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(({
         return x >= sx && x < sx + width && y >= sy && y < sy + height;
     }, [selectionRect]);
 
-    const handlePixelAction = (x: number, y: number) => {
+    // --- Actions sur les pixels ---
+    const handlePixelAction = useCallback((x: number, y: number) => {
         switch (activeTool) {
             case 'pencil': setPixel(x, y, currentColor); break;
             case 'eraser': setPixel(x, y, '#FFFFFF'); break;
@@ -163,9 +174,9 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(({
             }
             default: break;
         }
-    };
+    }, [activeTool, currentColor, setPixel, getPixel, setCurrentColor]);
 
-    // Copier la sélection
+    // --- Copier/Coller ---
     const copySelection = useCallback(() => {
         if (!selectionRect) {
             console.log('No selection to copy');
@@ -179,7 +190,8 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(({
                 const px = x + dx;
                 const py = y + dy;
                 if (px < effectiveWidth && py < effectiveHeight) {
-                    row.push(pixels[py][px]);
+                    const index = py * effectiveWidth + px;
+                    row.push(pixels[index]);
                 } else {
                     row.push('#FFFFFF');
                 }
@@ -230,8 +242,8 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(({
         hasSelection: () => !!selectionRect,
     }), [copySelection, pasteSelection, pasteAtMouse, selectionRect]);
 
-    // Événements souris
-    const handleMouseDown = (e: React.MouseEvent) => {
+    // --- Gestionnaires d'événements souris ---
+    const handleMouseDown = useCallback((e: React.MouseEvent) => {
         const target = e.target as HTMLElement;
         if (target.closest('button')) return;
 
@@ -253,9 +265,9 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(({
             setIsDrawing(true);
             handlePixelAction(indices.x, indices.y);
         }
-    };
+    }, [activeTool, getPixelIndexFromEvent, handlePixelAction]);
 
-    const handleMouseMove = (e: React.MouseEvent) => {
+    const handleMouseMove = useCallback((e: React.MouseEvent) => {
         if (isPanning && lastPanPoint) {
             const dx = e.clientX - lastPanPoint.x;
             const dy = e.clientY - lastPanPoint.y;
@@ -281,9 +293,9 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(({
         } else if (isDrawing) {
             handlePixelAction(indices.x, indices.y);
         }
-    };
+    }, [isPanning, lastPanPoint, translateX, translateY, onTranslateXChange, onTranslateYChange, activeTool, isSelecting, selectionStart, isDrawing, getPixelIndexFromEvent, handlePixelAction]);
 
-    const handleMouseUp = (e: React.MouseEvent) => {
+    const handleMouseUp = useCallback((e: React.MouseEvent) => {
         if (e.button === 2) {
             setIsPanning(false);
             setLastPanPoint(null);
@@ -312,38 +324,48 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(({
         } else {
             setIsDrawing(false);
         }
-    };
+    }, [activeTool, isSelecting, selectionStart, selectionEnd, isPointInSelection, getPixelIndexFromEvent]);
 
-    const handleMouseLeave = () => {
+    const handleMouseLeave = useCallback(() => {
         setIsDrawing(false);
         setIsPanning(false);
         setIsSelecting(false);
         setLastPanPoint(null);
-    };
+    }, []);
 
-    const handleWheel = (e: WheelEvent) => {
-        e.preventDefault();
-        const rect = containerRef.current?.getBoundingClientRect();
-        if (!rect) return;
+    // --- Zoom à la molette ---
+    useEffect(() => {
+        const container = containerRef.current;
+        if (!container) return;
 
-        const mouseX = e.clientX - rect.left;
-        const mouseY = e.clientY - rect.top;
+        const wheelHandler = (e: globalThis.WheelEvent) => {
+            e.preventDefault();
 
-        const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
-        const newScale = Math.min(Math.max(scale * zoomFactor, 0.2), 5);
+            const rect = container.getBoundingClientRect();
+            if (!rect) return;
 
-        const newTranslateX = mouseX - (mouseX - translateX) * (newScale / scale);
-        const newTranslateY = mouseY - (mouseY - translateY) * (newScale / scale);
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
 
-        if (onScaleChange) onScaleChange(newScale);
-        else setInternalScale(newScale);
-        if (onTranslateXChange) onTranslateXChange(newTranslateX);
-        else setInternalTranslateX(newTranslateX);
-        if (onTranslateYChange) onTranslateYChange(newTranslateY);
-        else setInternalTranslateY(newTranslateY);
-    };
+            const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
+            const newScale = Math.min(Math.max(scale * zoomFactor, 0.2), 5);
 
-    // Raccourcis clavier
+            const newTranslateX = mouseX - (mouseX - translateX) * (newScale / scale);
+            const newTranslateY = mouseY - (mouseY - translateY) * (newScale / scale);
+
+            if (onScaleChange) onScaleChange(newScale);
+            else setInternalScale(newScale);
+            if (onTranslateXChange) onTranslateXChange(newTranslateX);
+            else setInternalTranslateX(newTranslateX);
+            if (onTranslateYChange) onTranslateYChange(newTranslateY);
+            else setInternalTranslateY(newTranslateY);
+        };
+
+        container.addEventListener('wheel', wheelHandler, { passive: false });
+        return () => container.removeEventListener('wheel', wheelHandler);
+    }, [scale, translateX, translateY, onScaleChange, onTranslateXChange, onTranslateYChange]);
+
+    // --- Raccourcis clavier ---
     useEffect(() => {
         const handleKeyDown = (e: globalThis.KeyboardEvent) => {
             if (e.ctrlKey || e.metaKey) {
@@ -360,7 +382,7 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(({
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [copySelection, pasteAtMouse]);
 
-    // Mémorisation de la dernière position souris
+    // --- Mémorisation position souris globale ---
     useEffect(() => {
         const handleMouseMoveGlobal = (e: globalThis.MouseEvent) => {
             lastMousePosRef.current = { clientX: e.clientX, clientY: e.clientY };
@@ -369,7 +391,7 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(({
         return () => window.removeEventListener('mousemove', handleMouseMoveGlobal);
     }, []);
 
-    // Empêcher le menu contextuel
+    // --- Empêcher le menu contextuel ---
     useEffect(() => {
         const preventContextMenu = (e: Event) => e.preventDefault();
         const el = containerRef.current;
@@ -383,16 +405,15 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(({
         };
     }, []);
 
-    // --- Overlay de sélection (dessiné par dessus le canvas) ---
-    let selectionOverlay = null;
-    if (selectionRect) {
+    // --- Overlays de sélection ---
+    const selectionOverlay = useMemo(() => {
+        if (!selectionRect) return null;
         const { x, y, width, height } = selectionRect;
         const left = x * cellSize * scale + translateX;
         const top = y * cellSize * scale + translateY;
         const w = width * cellSize * scale;
         const h = height * cellSize * scale;
-
-        selectionOverlay = (
+        return (
             <div
                 style={{
                     position: 'absolute',
@@ -407,23 +428,21 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(({
                 }}
             />
         );
-    }
+    }, [selectionRect, cellSize, scale, translateX, translateY]);
 
-    let activeSelectionOverlay = null;
-    if (activeTool === 'select' && isSelecting && selectionStart && selectionEnd) {
+    const activeSelectionOverlay = useMemo(() => {
+        if (!(activeTool === 'select' && isSelecting && selectionStart && selectionEnd)) return null;
         const start = selectionStart;
         const end = selectionEnd;
         const x = Math.min(start.x, end.x);
         const y = Math.min(start.y, end.y);
         const width = Math.abs(end.x - start.x) + 1;
         const height = Math.abs(end.y - start.y) + 1;
-
         const left = x * cellSize * scale + translateX;
         const top = y * cellSize * scale + translateY;
         const w = width * cellSize * scale;
         const h = height * cellSize * scale;
-
-        activeSelectionOverlay = (
+        return (
             <div
                 style={{
                     position: 'absolute',
@@ -438,7 +457,7 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(({
                 }}
             />
         );
-    }
+    }, [activeTool, isSelecting, selectionStart, selectionEnd, cellSize, scale, translateX, translateY]);
 
     return (
         <div
@@ -449,7 +468,6 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(({
                 height: '100%',
                 cursor: isPanning ? 'grabbing' : (activeTool === 'select' ? 'crosshair' : 'default'),
             }}
-            onWheel={handleWheel}
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
@@ -459,7 +477,7 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(({
                 ref={canvasRef}
                 style={{
                     display: 'block',
-                    width: effectiveWidth * cellSize,  // taille physique, pas de scale
+                    width: effectiveWidth * cellSize,
                     height: effectiveHeight * cellSize,
                 }}
             />
