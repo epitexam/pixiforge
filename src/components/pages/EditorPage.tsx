@@ -5,6 +5,7 @@ import { Toolbar } from '../organisms/Toolbar';
 import { Palette } from '../molecules/Palette';
 import { Canvas, CanvasHandle } from '../organisms/Canvas';
 import { ZoomControls } from '../atoms/ZoomControls';
+import { CopyIcon, PasteIcon, ClearIcon } from '../atoms/EditorIcons';
 import { useCanvasStore } from '../../stores/canvaStore';
 
 const DEFAULT_COLORS = [
@@ -48,26 +49,26 @@ export const EditorPage: React.FC = () => {
     };
 
     return (
-        <div className="flex flex-col h-screen w-screen bg-[#0d0d0d] overflow-hidden font-mono select-none">
-            <header className="flex-none h-10 bg-[#161616] border-b border-[#2a2a2a] flex items-stretch z-20">
+        <div className="flex flex-col h-screen w-screen bg-[#0d0d0d] overflow-hidden font-sans select-none">
+            <header className="flex-none h-11 bg-[#1a1a1a] border-b border-[#2a2a2a] flex items-stretch z-20">
                 <MenuBar />
             </header>
 
             <main className="flex flex-1 overflow-hidden">
-                <aside className="flex-none w-14 bg-[#161616] border-r border-[#2a2a2a] flex flex-col items-center py-3 gap-1">
+                <aside className="flex-none w-14 bg-[#1a1a1a] border-r border-[#2a2a2a] flex flex-col items-center py-3 gap-1">
                     <Toolbar orientation="vertical" />
                 </aside>
 
-                <section className="flex-1 flex items-center justify-center bg-[#0d0d0d] relative overflow-hidden">
+                <section className="flex-1 flex items-center justify-center bg-[#0f0f0f] relative overflow-hidden">
                     <div
-                        className="absolute inset-0 opacity-[0.15]"
+                        className="absolute inset-0 opacity-[0.1]"
                         style={{
                             backgroundImage: 'radial-gradient(circle, #3a3a3a 1px, transparent 1px)',
                             backgroundSize: '24px 24px',
                         }}
                     />
                     <div className="relative z-10 w-full h-full flex items-center justify-center overflow-auto">
-                        <div className="inline-block shadow-[0_0_60px_rgba(0,0,0,0.8)] ring-1 ring-[#2a2a2a] bg-[#1a1a1a]">
+                        <div className="inline-block shadow-2xl ring-1 ring-[#2a2a2a] bg-[#1a1a1a] rounded-sm">
                             <Canvas
                                 ref={canvasRef}
                                 cellSize={16}
@@ -81,36 +82,36 @@ export const EditorPage: React.FC = () => {
                         </div>
                     </div>
 
-                    <div className="absolute bottom-3 right-4 text-[10px] text-[#3a3a3a] tracking-[0.2em] uppercase">
+                    <div className="absolute bottom-3 right-4 text-[10px] text-[#4a4a4a] tracking-[0.2em] uppercase bg-[#0f0f0f]/80 px-2 py-1 rounded-sm backdrop-blur-sm">
                         16px · 64×64
                     </div>
                 </section>
 
-                <aside className="hidden lg:flex lg:flex-col lg:w-52 bg-[#161616] border-l border-[#2a2a2a]">
-                    <div className="px-3 py-2 border-b border-[#2a2a2a]">
-                        <span className="text-[10px] font-bold tracking-[0.2em] text-[#444] uppercase">
+                <aside className="hidden lg:flex lg:flex-col lg:w-56 bg-[#1a1a1a] border-l border-[#2a2a2a]">
+                    <div className="px-4 py-3 border-b border-[#2a2a2a]">
+                        <span className="text-[10px] font-semibold tracking-[0.2em] text-[#666] uppercase">
                             Layers
                         </span>
                     </div>
 
-                    <div className="m-2 px-2 py-2 rounded-sm bg-[#1e1e1e] border border-[#2f2f2f] flex items-center gap-2 cursor-pointer hover:border-[#3f3f3f] transition-colors">
-                        <div className="w-3 h-3 rounded-sm bg-[#3a3a3a] flex-none" />
-                        <span className="text-[11px] text-[#999]">Background</span>
+                    <div className="m-2 p-2 rounded-sm bg-[#252525] border border-[#333] flex items-center gap-2 cursor-pointer hover:border-[#4a9eff] transition-colors group">
+                        <div className="w-4 h-4 rounded-sm bg-[#3a3a3a] flex-none" />
+                        <span className="text-[12px] text-[#aaa] group-hover:text-[#ddd]">Background</span>
                         <div className="ml-auto w-2 h-2 rounded-full bg-[#4a9eff] flex-none" />
                     </div>
 
                     <div className="flex-1" />
 
-                    <div className="px-3 py-3 border-t border-[#2a2a2a]">
-                        <span className="text-[9px] tracking-[0.2em] text-[#444] uppercase">
+                    <div className="px-4 py-4 border-t border-[#2a2a2a]">
+                        <span className="text-[9px] font-semibold tracking-[0.2em] text-[#666] uppercase">
                             Active Color
                         </span>
-                        <div className="mt-2 flex items-center gap-2">
+                        <div className="mt-3 flex items-center gap-3">
                             <div
-                                className="w-8 h-8 rounded-sm border border-[#333] flex-none shadow-[inset_0_2px_4px_rgba(0,0,0,0.4)]"
+                                className="w-10 h-10 rounded-sm border border-[#444] shadow-[inset_0_2px_4px_rgba(0,0,0,0.5)]"
                                 style={{ backgroundColor: currentColor }}
                             />
-                            <span className="text-[10px] text-[#666] font-mono uppercase tracking-wider">
+                            <span className="text-[11px] text-[#888] font-mono uppercase tracking-wider">
                                 {currentColor}
                             </span>
                         </div>
@@ -118,9 +119,9 @@ export const EditorPage: React.FC = () => {
                 </aside>
             </main>
 
-            <footer className="flex-none h-14 bg-[#161616] border-t border-[#2a2a2a] flex items-center gap-3 px-4 overflow-x-auto">
+            <footer className="flex-none h-14 bg-[#1a1a1a] border-t border-[#2a2a2a] flex items-center gap-4 px-6 overflow-x-auto">
                 <div
-                    className="flex-none w-8 h-8 rounded-sm border border-[#333] shadow-[inset_0_2px_4px_rgba(0,0,0,0.5)]"
+                    className="flex-none w-8 h-8 rounded-sm border border-[#444] shadow-[inset_0_2px_4px_rgba(0,0,0,0.5)]"
                     style={{ backgroundColor: currentColor }}
                     title={currentColor}
                 />
@@ -138,20 +139,21 @@ export const EditorPage: React.FC = () => {
                 </div>
 
                 <div className="flex-none w-px h-6 bg-[#2a2a2a]" />
+
                 <div className="flex items-center gap-2">
                     <button
                         onClick={handleCopy}
-                        className="w-7 h-7 flex items-center justify-center bg-[#252525] border border-[#333] rounded-sm hover:border-[#4a9eff] hover:text-[#4a9eff] text-[#aaa] text-xs transition-all"
+                        className="w-8 h-8 flex items-center justify-center bg-[#252525] border border-[#333] rounded-md hover:border-[#4a9eff] hover:text-[#4a9eff] text-[#aaa] transition-all"
                         title="Copy selection (Ctrl+C)"
                     >
-                        📋
+                        <CopyIcon className="w-4 h-4" />
                     </button>
                     <button
                         onClick={handlePaste}
-                        className="w-7 h-7 flex items-center justify-center bg-[#252525] border border-[#333] rounded-sm hover:border-[#4a9eff] hover:text-[#4a9eff] text-[#aaa] text-xs transition-all"
+                        className="w-8 h-8 flex items-center justify-center bg-[#252525] border border-[#333] rounded-md hover:border-[#4a9eff] hover:text-[#4a9eff] text-[#aaa] transition-all"
                         title="Paste at mouse position (Ctrl+V)"
                     >
-                        📌
+                        <PasteIcon className="w-4 h-4" />
                     </button>
                 </div>
 
@@ -168,12 +170,14 @@ export const EditorPage: React.FC = () => {
 
                 <button
                     onClick={clearCanvas}
-                    className="flex-none px-3 py-1.5 text-[10px] font-bold tracking-[0.15em] uppercase
-                               text-[#555] hover:text-[#cf6679]
-                               border border-[#252525] hover:border-[#cf6679]/40
-                               rounded-sm transition-all duration-150 cursor-pointer bg-transparent"
+                    className="flex items-center gap-2 px-3 py-1.5 text-[11px] font-medium tracking-wide
+                               text-[#888] hover:text-[#cf6679]
+                               border border-[#333] hover:border-[#cf6679]/50
+                               rounded-md transition-all bg-[#252525] hover:bg-[#2a2a2a]"
+                    title="Clear canvas"
                 >
-                    ✕ Clear
+                    <ClearIcon className="w-4 h-4" />
+                    <span>Clear</span>
                 </button>
             </footer>
         </div>
