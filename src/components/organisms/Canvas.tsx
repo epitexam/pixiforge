@@ -98,21 +98,31 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(({
             }
         }
 
-        // Optionnel : dessiner une fine grille pour délimiter les pixels
-        ctx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
+        // Dessiner la grille avec une épaisseur constante en pixels écran
+        ctx.save();
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+
+        ctx.strokeStyle = 'rgba(100, 100, 100, 0.3)';
         ctx.lineWidth = 1;
+
         for (let y = 0; y <= effectiveHeight; y++) {
+            const yPos = y * cellSize * scale + translateY;
             ctx.beginPath();
-            ctx.moveTo(0, y * cellSize);
-            ctx.lineTo(effectiveWidth * cellSize, y * cellSize);
+            ctx.moveTo(translateX, yPos);
+            ctx.lineTo(effectiveWidth * cellSize * scale + translateX, yPos);
             ctx.stroke();
         }
+
+        // Lignes verticales
         for (let x = 0; x <= effectiveWidth; x++) {
+            const xPos = x * cellSize * scale + translateX;
             ctx.beginPath();
-            ctx.moveTo(x * cellSize, 0);
-            ctx.lineTo(x * cellSize, effectiveHeight * cellSize);
+            ctx.moveTo(xPos, translateY);
+            ctx.lineTo(xPos, effectiveHeight * cellSize * scale + translateY);
             ctx.stroke();
         }
+
+        ctx.restore();
     }, [pixels, effectiveWidth, effectiveHeight, cellSize, scale, translateX]);
 
     // --- Gestion des événements souris ---
