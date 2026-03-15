@@ -1,7 +1,8 @@
 import { create } from 'zustand';
 import { Color } from '../types';
 
-const DEFAULT_COLOR: Color = '#FFFFFF';
+export const DEFAULT_COLOR: Color = '#F0F0F0';
+
 const DEFAULT_WIDTH = 32;
 const DEFAULT_HEIGHT = 32;
 
@@ -12,7 +13,7 @@ const createEmptyPixels = (width: number, height: number): Color[] => {
 interface CanvasState {
     width: number;
     height: number;
-    pixels: Color[]; // tableau 1D (row-major)
+    pixels: Color[];
 }
 
 interface CanvasStore extends CanvasState {
@@ -20,7 +21,7 @@ interface CanvasStore extends CanvasState {
     getPixel: (x: number, y: number) => Color | undefined;
     clearCanvas: () => void;
     resizeCanvas: (width: number, height: number) => void;
-    setAllPixels: (pixels: Color[][]) => void; // garde l'interface 2D
+    setAllPixels: (pixels: Color[][]) => void;
 }
 
 export const useCanvasStore = create<CanvasStore>((set, get) => ({
@@ -31,7 +32,7 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
     setPixel: (x, y, color) => set((state) => {
         if (x < 0 || x >= state.width || y < 0 || y >= state.height) return state;
         const index = y * state.width + x;
-        const newPixels = [...state.pixels]; // copie unique du tableau plat
+        const newPixels = [...state.pixels];
         newPixels[index] = color;
         return { pixels: newPixels };
     }),

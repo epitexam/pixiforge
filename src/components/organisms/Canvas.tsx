@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback, useImperativeHandle, forwardRef, useMemo } from 'react';
 import { useToolStore } from '../../stores/toolStore';
 import { Color } from '../../types';
-import { useCanvasStore } from '../../stores/canvaStore';
+import { DEFAULT_COLOR, useCanvasStore } from '../../stores/canvaStore';
 
 export interface CanvasProps {
     width?: number;
@@ -92,7 +92,7 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(({
         for (let y = 0; y < effectiveHeight; y++) {
             for (let x = 0; x < effectiveWidth; x++) {
                 const index = y * effectiveWidth + x;
-                const color = pixels[index] ?? '#FFFFFF';
+                const color = pixels[index] ?? DEFAULT_COLOR;
                 ctx.fillStyle = color;
                 ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
             }
@@ -166,7 +166,7 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(({
     const handlePixelAction = useCallback((x: number, y: number) => {
         switch (activeTool) {
             case 'pencil': setPixel(x, y, currentColor); break;
-            case 'eraser': setPixel(x, y, '#FFFFFF'); break;
+            case 'eraser': setPixel(x, y, DEFAULT_COLOR); break;
             case 'picker': {
                 const color = getPixel(x, y);
                 if (color) setCurrentColor(color);
@@ -193,7 +193,7 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(({
                     const index = py * effectiveWidth + px;
                     row.push(pixels[index]);
                 } else {
-                    row.push('#FFFFFF');
+                    row.push(DEFAULT_COLOR);
                 }
             }
             copied.push(row);
