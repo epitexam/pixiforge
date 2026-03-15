@@ -1,16 +1,17 @@
 import React from 'react';
 import { useToolStore, Tool } from '../../stores/toolStore';
+import { PencilIcon, EraserIcon, PickerIcon, SelectIcon } from '../atoms/ToolIcons';
 
 export interface ToolbarProps {
     orientation?: 'horizontal' | 'vertical';
     className?: string;
 }
 
-const TOOLS: { id: Tool; label: string; icon: string; shortcut: string }[] = [
-    { id: 'pencil', label: 'Pencil', icon: '✏', shortcut: 'B' },
-    { id: 'eraser', label: 'Eraser', icon: '◻', shortcut: 'E' },
-    { id: 'picker', label: 'Picker', icon: '✦', shortcut: 'I' },
-    { id: 'select', label: 'Select', icon: '▭', shortcut: 'S' },
+const TOOLS: { id: Tool; label: string; icon: React.FC<{ className?: string }>; shortcut: string }[] = [
+    { id: 'pencil', label: 'Pencil', icon: PencilIcon, shortcut: 'B' },
+    { id: 'eraser', label: 'Eraser', icon: EraserIcon, shortcut: 'E' },
+    { id: 'picker', label: 'Picker', icon: PickerIcon, shortcut: 'I' },
+    { id: 'select', label: 'Select', icon: SelectIcon, shortcut: 'S' },
 ];
 
 export const Toolbar: React.FC<ToolbarProps> = ({
@@ -30,26 +31,26 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                 </span>
             )}
 
-            {TOOLS.map((tool) => {
-                const isActive = activeTool === tool.id;
+            {TOOLS.map(({ id, label, icon: Icon, shortcut }) => {
+                const isActive = activeTool === id;
                 return (
                     <button
-                        key={tool.id}
-                        onClick={() => setActiveTool(tool.id)}
-                        title={`${tool.label} (${tool.shortcut})`}
-                        aria-label={tool.label}
+                        key={id}
+                        onClick={() => setActiveTool(id)}
+                        title={`${label} (${shortcut})`}
+                        aria-label={label}
                         aria-pressed={isActive}
                         className={`
                             group relative flex items-center justify-center
                             ${isVertical ? 'w-10 h-10' : 'w-10 h-10'}
-                            rounded-sm text-base transition-all duration-100 cursor-pointer
+                            rounded-sm transition-all duration-100 cursor-pointer
                             ${isActive
                                 ? 'bg-[#4a9eff]/15 text-[#4a9eff] ring-1 ring-[#4a9eff]/50'
                                 : 'text-[#555] hover:text-[#bbb] hover:bg-[#1e1e1e]'
                             }
                         `}
                     >
-                        <span className="leading-none">{tool.icon}</span>
+                        <Icon className="w-5 h-5" />
 
                         {isVertical && (
                             <span className="
@@ -59,8 +60,8 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                                 opacity-0 group-hover:opacity-100 transition-opacity duration-100
                                 z-50 font-mono tracking-wider
                             ">
-                                {tool.label}
-                                <span className="ml-2 text-[#444]">{tool.shortcut}</span>
+                                {label}
+                                <span className="ml-2 text-[#444]">{shortcut}</span>
                             </span>
                         )}
                     </button>
