@@ -1,5 +1,6 @@
 import React from 'react';
 import { invoke } from '@tauri-apps/api/core';
+import { NewFileIcon, OpenFileIcon, SaveFileIcon } from '../atoms/MenuIcons';
 import { useCanvasStore } from '../../stores/canvaStore';
 
 export interface MenuBarProps {
@@ -43,34 +44,36 @@ export const MenuBar: React.FC<MenuBarProps> = ({ className = '' }) => {
     };
 
     const menuItems = [
-        { label: 'File', children: [
-            { label: 'New', action: handleNew, shortcut: 'Ctrl+N' },
-            { label: 'Open', action: handleOpen, shortcut: 'Ctrl+O' },
-            { label: 'Save', action: handleSave, shortcut: 'Ctrl+S' },
-        ]},
+        { label: 'New', icon: NewFileIcon, action: handleNew, shortcut: 'Ctrl+N' },
+        { label: 'Open', icon: OpenFileIcon, action: handleOpen, shortcut: 'Ctrl+O' },
+        { label: 'Save', icon: SaveFileIcon, action: handleSave, shortcut: 'Ctrl+S' },
     ];
 
     return (
         <nav className={`flex items-stretch h-full ${className}`}>
             <div className="flex items-center px-4 border-r border-[#2a2a2a]">
                 <span className="text-[11px] font-bold tracking-[0.25em] text-[#4a9eff] uppercase">
-                    Pixi
+                    PixiForge
                 </span>
             </div>
 
             <div className="flex items-stretch">
-                {menuItems[0].children.map((item) => (
-                    <button
-                        key={item.label}
-                        onClick={item.action}
-                        className="px-4 text-[12px] text-[#888] hover:text-[#ddd] hover:bg-[#1f1f1f]
-                                   border-r border-[#1a1a1a] transition-colors duration-100
-                                   tracking-wider cursor-pointer"
-                        title={item.shortcut}
-                    >
-                        {item.label}
-                    </button>
-                ))}
+                {menuItems.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                        <button
+                            key={item.label}
+                            onClick={item.action}
+                            className="flex items-center gap-2 px-4 text-[12px] text-[#888] 
+                                       hover:text-[#ddd] hover:bg-[#1f1f1f] transition-colors duration-100
+                                       border-r border-[#1a1a1a] last:border-r-0 cursor-pointer"
+                            title={`${item.label} (${item.shortcut})`}
+                        >
+                            <Icon className="w-3.5 h-3.5" />
+                            <span className="tracking-wider">{item.label}</span>
+                        </button>
+                    );
+                })}
             </div>
         </nav>
     );
