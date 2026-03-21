@@ -1,20 +1,22 @@
-import React, {
-  useRef,
-  useMemo,
+import {
   forwardRef,
-  useImperativeHandle,
   useCallback,
+  useImperativeHandle,
+  useMemo,
+  useRef,
 } from "react";
 import { CanvasHandle } from "./canvas/types";
-import { useToolStore } from "../../stores/toolStore";
 import { useCanvasStore } from "../../stores/canvaStore";
+import { useToolStore } from "../../stores/toolStore";
+import { useGlobalMousePosition } from "./canvas/useGlobalMousePosition";
 import { useZoomPan } from "./canvas/useZoomPan";
 import { useCanvasTransform } from "./canvas/useCanvasTransform";
 import { useSelection } from "./canvas/useSelection";
 import { useCanvasRendering } from "./canvas/useCanvasRendering";
 import { useMouseEvents } from "./canvas/useMouseEvents";
 import { useKeyboardShortcuts } from "./canvas/useKeyboardShortcuts";
-
+import { usePreventContextMenu } from "./canvas/usePreventContextMenu";
+import { SelectionOverlay } from "./canvas/SelectionOverlay";
 
 export interface CanvasProps {
   width?: number;
@@ -65,9 +67,7 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(
 
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
-    const lastMousePosRef = useRef<{ clientX: number; clientY: number } | null>(
-      null,
-    );
+    const lastMousePosRef = useGlobalMousePosition();
 
     const { scale, translateX, translateY, setTranslateX, setTranslateY } =
       useZoomPan({
@@ -170,27 +170,7 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(
 
     useKeyboardShortcuts({ copySelection, pasteAtMouse: pasteAtMouseHandler });
 
-    React.useEffect(() => {
-      const handleMouseMoveGlobal = (e: globalThis.MouseEvent) => {
-        lastMousePosRef.current = { clientX: e.clientX, clientY: e.clientY };
-      };
-      window.addEventListener("mousemove", handleMouseMoveGlobal);
-      return () =>
-        window.removeEventListener("mousemove", handleMouseMoveGlobal);
-    }, []);
-
-    React.useEffect(() => {
-      const preventContextMenu = (e: Event) => e.preventDefault();
-      const el = containerRef.current;
-      if (el) {
-        el.addEventListener("contextmenu", preventContextMenu);
-      }
-      return () => {
-        if (el) {
-          el.removeEventListener("contextmenu", preventContextMenu);
-        }
-      };
-    }, []);
+    usePreventContextMenu(containerRef);
 
     useImperativeHandle(
       ref,
@@ -203,31 +183,7 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(
       [copySelection, pasteSelection, pasteAtMouseHandler, selectionRect],
     );
 
-    const selectionOverlay = useMemo(() => {
-      if (!selectionRect) return null;
-      const { x, y, width, height } = selectionRect;
-      const left = x * cellSize * scale + translateX;
-      const top = y * cellSize * scale + translateY;
-      const w = width * cellSize * scale;
-      const h = height * cellSize * scale;
-      return (
-        <div
-          style={{
-            position: "absolute",
-            left,
-            top,
-            width: w,
-            height: h,
-            border: "2px dashed #4a9eff",
-            backgroundColor: "rgba(74, 158, 255, 0.1)",
-            pointerEvents: "none",
-            zIndex: 10,
-          }}
-        />
-      );
-    }, [selectionRect, cellSize, scale, translateX, translateY]);
-
-    const activeSelectionOverlay = useMemo(() => {
+    const activeRect = useMemo(() => {
       if (
         !(
           activeTool === "select" &&
@@ -239,39 +195,15 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(
         return null;
       const start = selectionStart;
       const end = selectionEnd;
-      const x = Math.min(start.x, end.x);
-      const y = Math.min(start.y, end.y);
-      const width = Math.abs(end.x - start.x) + 1;
-      const height = Math.abs(end.y - start.y) + 1;
-      const left = x * cellSize * scale + translateX;
-      const top = y * cellSize * scale + translateY;
-      const w = width * cellSize * scale;
-      const h = height * cellSize * scale;
-      return (
-        <div
-          style={{
-            position: "absolute",
-            left,
-            top,
-            width: w,
-            height: h,
-            border: "2px solid #4a9eff",
-            backgroundColor: "rgba(74, 158, 255, 0.2)",
-            pointerEvents: "none",
-            zIndex: 10,
-          }}
-        />
-      );
-    }, [
-      activeTool,
-      isSelecting,
-      selectionStart,
-      selectionEnd,
-      cellSize,
-      scale,
-      translateX,
-      translateY,
-    ]);
+      return {
+        x: Math.min(start!.x, end!.x),
+        y: Math.min(start!.y, end!.y),
+        width: Math.abs(end!.x - start!.x) + 1,
+        height: Math.abs(end!.y - start!.y) + 1,
+      };
+    }, [activeTool, isSelecting, selectionStart, selectionEnd]);
+
+    const staticRect = useMemo(() => selectionRect, [selectionRect]);
 
     return (
       <div
@@ -299,8 +231,24 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(
             height: effectiveHeight * cellSize,
           }}
         />
-        {activeSelectionOverlay}
-        {selectionOverlay}
+        <SelectionOverlay
+          rect={activeRect}
+          cellSize={cellSize}
+          scale={scale}
+          translateX={translateX}
+          translateY={translateY}
+          isActive={true}
+          backgroundColor="rgba(74, 158, 255, 0.2)"
+        />
+        <SelectionOverlay
+          rect={staticRect}
+          cellSize={cellSize}
+          scale={scale}
+          translateX={translateX}
+          translateY={translateY}
+          isActive={false}
+          backgroundColor="rgba(74, 158, 255, 0.1)"
+        />
       </div>
     );
   },
