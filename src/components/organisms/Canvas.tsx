@@ -140,7 +140,6 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(
     );
 
     const {
-      isDrawing,
       isSelecting,
       selectionStart,
       selectionEnd,
@@ -208,10 +207,10 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(
     return (
       <div
         ref={containerRef}
-        className={`relative overflow-hidden ${className}`}
+        className={`relative inline-block ${className}`}
         style={{
-          width: "100%",
-          height: "100%",
+          width: effectiveWidth * cellSize,
+          height: effectiveHeight * cellSize,
           cursor: isPanning
             ? "grabbing"
             : activeTool === "select"
@@ -227,8 +226,8 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(
           ref={canvasRef}
           style={{
             display: "block",
-            width: effectiveWidth * cellSize,
-            height: effectiveHeight * cellSize,
+            width: "100%",
+            height: "100%",
           }}
         />
         <SelectionOverlay

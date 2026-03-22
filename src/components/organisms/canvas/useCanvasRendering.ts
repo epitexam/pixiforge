@@ -27,11 +27,31 @@ export const useCanvasRendering = ({
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext("2d");
+    const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
     canvas.width = effectiveWidth * cellSize;
     canvas.height = effectiveHeight * cellSize;
+
+    for (let y = 0; y < effectiveHeight; y++) {
+      for (let x = 0; x < effectiveWidth; x++) {
+        const index = y * effectiveWidth + x;
+        const color = pixels[index] ?? DEFAULT_COLOR;
+        ctx.fillStyle = color;
+        ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
+      }
+    }
+  }, [pixels, effectiveWidth, effectiveHeight, cellSize]);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    canvas.width = effectiveWidth * cellSize;
+    canvas.height = effectiveHeight * cellSize;
+
     ctx.setTransform(scale, 0, 0, scale, translateX, translateY);
 
     for (let y = 0; y < effectiveHeight; y++) {
@@ -42,51 +62,23 @@ export const useCanvasRendering = ({
         ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
       }
     }
-  }, [
-    pixels,
-    effectiveWidth,
-    effectiveHeight,
-    cellSize,
-    scale,
-    translateX,
-    canvasRef,
-  ]);
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    ctx.save();
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.strokeStyle = DEFAULT_GRID_COLOR;
     ctx.lineWidth = 1;
 
     for (let y = 0; y <= effectiveHeight; y++) {
-      const yPos = y * cellSize * scale + translateY;
+      const yPos = y * cellSize;
       ctx.beginPath();
-      ctx.moveTo(translateX, yPos);
-      ctx.lineTo(effectiveWidth * cellSize * scale + translateX, yPos);
+      ctx.moveTo(0, yPos);
+      ctx.lineTo(effectiveWidth * cellSize, yPos);
       ctx.stroke();
     }
-
     for (let x = 0; x <= effectiveWidth; x++) {
-      const xPos = x * cellSize * scale + translateX;
+      const xPos = x * cellSize;
       ctx.beginPath();
-      ctx.moveTo(xPos, translateY);
-      ctx.lineTo(xPos, effectiveHeight * cellSize * scale + translateY);
+      ctx.moveTo(xPos, 0);
+      ctx.lineTo(xPos, effectiveHeight * cellSize);
       ctx.stroke();
     }
-
-    ctx.restore();
-  }, [
-    effectiveWidth,
-    effectiveHeight,
-    cellSize,
-    scale,
-    translateX,
-    translateY,
-    canvasRef,
-  ]);
+  }, [pixels, effectiveWidth, effectiveHeight, cellSize, scale, translateX]);
 };

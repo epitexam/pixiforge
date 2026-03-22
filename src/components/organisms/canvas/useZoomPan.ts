@@ -41,8 +41,12 @@ export const useZoomPan = ({
         Math.max(scale * zoomFactor, MIN_SCALE),
         MAX_SCALE,
       );
-      const newTranslateX = mouseX - (mouseX - translateX) * (newScale / scale);
-      const newTranslateY = mouseY - (mouseY - translateY) * (newScale / scale);
+
+      const canvasXUnderMouse = (mouseX - translateX) / scale;
+      const canvasYUnderMouse = (mouseY - translateY) / scale;
+
+      const newTranslateX = mouseX - newScale * canvasXUnderMouse;
+      const newTranslateY = mouseY - newScale * canvasYUnderMouse;
 
       setScale(newScale);
       setTranslateX(newTranslateX);
