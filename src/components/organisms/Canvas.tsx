@@ -6,7 +6,7 @@ import {
   useRef,
 } from "react";
 import { CanvasHandle } from "./canvas/types";
-import { useCanvasStore } from "../../stores/canvaStore";
+import { DEFAULT_COLOR, useCanvasStore } from "../../stores/canvaStore";
 import { useToolStore } from "../../stores/toolStore";
 import { useGlobalMousePosition } from "./canvas/useGlobalMousePosition";
 import { useZoomPan } from "./canvas/useZoomPan";
@@ -125,7 +125,7 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(
             setPixel(x, y, currentColor);
             break;
           case "eraser":
-            setPixel(x, y, "#F0F0F0");
+            setPixel(x, y, DEFAULT_COLOR);
             break;
           case "picker": {
             const color = getPixel(x, y);
@@ -204,6 +204,18 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(
 
     const staticRect = useMemo(() => selectionRect, [selectionRect]);
 
+    const getCursor = () => {
+      if (isPanning) return "grabbing";
+      switch (activeTool) {
+        case "select":
+          return "crosshair";
+        case "picker":
+          return "crosshair";
+        default:
+          return "default";
+      }
+    };
+
     return (
       <div
         ref={containerRef}
@@ -211,11 +223,7 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(
         style={{
           width: effectiveWidth * cellSize,
           height: effectiveHeight * cellSize,
-          cursor: isPanning
-            ? "grabbing"
-            : activeTool === "select"
-              ? "crosshair"
-              : "default",
+          cursor: getCursor(),
         }}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}

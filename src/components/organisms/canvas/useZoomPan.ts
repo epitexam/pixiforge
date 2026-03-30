@@ -34,26 +34,20 @@ export const useZoomPan = ({
   const setTranslateX = onTranslateXChange || setInternalTranslateX;
   const setTranslateY = onTranslateYChange || setInternalTranslateY;
 
-  const handleZoom = useCallback(
-    (deltaY: number, mouseX: number, mouseY: number) => {
-      const zoomFactor = deltaY > 0 ? ZOOM_FACTOR : 1 / ZOOM_FACTOR;
-      const newScale = Math.min(
-        Math.max(scale * zoomFactor, MIN_SCALE),
-        MAX_SCALE,
-      );
+  const handleZoom = useCallback((deltaY: number, mouseX: number, mouseY: number) => {
+    const zoomFactor = deltaY > 0 ? ZOOM_FACTOR : 1 / ZOOM_FACTOR;
+    const newScale = Math.min(Math.max(scale * zoomFactor, MIN_SCALE), MAX_SCALE);
 
-      const canvasXUnderMouse = (mouseX - translateX) / scale;
-      const canvasYUnderMouse = (mouseY - translateY) / scale;
+    const canvasXUnderMouse = (mouseX - translateX) / scale;
+    const canvasYUnderMouse = (mouseY - translateY) / scale;
 
-      const newTranslateX = mouseX - newScale * canvasXUnderMouse;
-      const newTranslateY = mouseY - newScale * canvasYUnderMouse;
+    const newTranslateX = mouseX - newScale * canvasXUnderMouse;
+    const newTranslateY = mouseY - newScale * canvasYUnderMouse;
 
-      setScale(newScale);
-      setTranslateX(newTranslateX);
-      setTranslateY(newTranslateY);
-    },
-    [scale, translateX, translateY, setScale, setTranslateX, setTranslateY],
-  );
+    setScale(newScale);
+    setTranslateX(newTranslateX);
+    setTranslateY(newTranslateY);
+  }, [scale, translateX, translateY, setScale, setTranslateX, setTranslateY]);
 
   useEffect(() => {
     const container = containerRef.current;
