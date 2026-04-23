@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useToolStore, Tool } from '../../stores/toolStore';
 import { PencilIcon, EraserIcon, PickerIcon, SelectIcon } from '../atoms/ToolIcons';
 
@@ -20,6 +20,38 @@ export const Toolbar: React.FC<ToolbarProps> = ({
 }) => {
     const { activeTool, setActiveTool } = useToolStore();
     const isVertical = orientation === 'vertical';
+
+    useEffect(() => {
+        const handleKeyDown = (e: globalThis.KeyboardEvent) => {
+            if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+            if (e.ctrlKey || e.metaKey) return;
+
+            const key = e.key.toLowerCase();
+            switch (key) {
+                case 'b':
+                    e.preventDefault();
+                    setActiveTool('pencil');
+                    break;
+                case 'e':
+                    e.preventDefault();
+                    setActiveTool('eraser');
+                    break;
+                case 'i':
+                    e.preventDefault();
+                    setActiveTool('picker');
+                    break;
+                case 's':
+                    e.preventDefault();
+                    setActiveTool('select');
+                    break;
+                default:
+                    break;
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [setActiveTool]);
 
     return (
         <div

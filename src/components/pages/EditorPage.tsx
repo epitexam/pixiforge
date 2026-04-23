@@ -3,10 +3,11 @@ import { useToolStore } from '../../stores/toolStore';
 import { MenuBar } from '../organisms/MenuBar';
 import { Toolbar } from '../organisms/Toolbar';
 import { Palette } from '../molecules/Palette';
-import { Canvas, CanvasHandle } from '../organisms/Canvas';
+import { Canvas } from '../organisms/Canvas';
 import { ZoomControls } from '../atoms/ZoomControls';
 import { CopyIcon, PasteIcon, ClearIcon } from '../atoms/EditorIcons';
 import { useCanvasStore } from '../../stores/canvaStore';
+import { CanvasHandle } from '../organisms/canvas/types';
 
 const DEFAULT_COLORS = [
     '#000000', '#FFFFFF', '#FF0000', '#00FF00', '#0000FF',
@@ -59,32 +60,17 @@ export const EditorPage: React.FC = () => {
                     <Toolbar orientation="vertical" />
                 </aside>
 
-                <section className="flex-1 flex items-center justify-center bg-[#0f0f0f] relative overflow-hidden">
-                    <div
-                        className="absolute inset-0 opacity-[0.1]"
-                        style={{
-                            backgroundImage: 'radial-gradient(circle, #3a3a3a 1px, transparent 1px)',
-                            backgroundSize: '24px 24px',
-                        }}
+                <section className="flex-1 flex items-center justify-center bg-[#0f0f0f] overflow-hidden relative">
+                    <Canvas
+                        ref={canvasRef}
+                        cellSize={16}
+                        scale={scale}
+                        onScaleChange={setScale}
+                        translateX={translateX}
+                        onTranslateXChange={setTranslateX}
+                        translateY={translateY}
+                        onTranslateYChange={setTranslateY}
                     />
-                    <div className="relative z-10 w-full h-full flex items-center justify-center overflow-auto">
-                        <div className="inline-block shadow-2xl ring-1 ring-[#2a2a2a] bg-[#1a1a1a] rounded-sm">
-                            <Canvas
-                                ref={canvasRef}
-                                cellSize={16}
-                                scale={scale}
-                                onScaleChange={setScale}
-                                translateX={translateX}
-                                onTranslateXChange={setTranslateX}
-                                translateY={translateY}
-                                onTranslateYChange={setTranslateY}
-                            />
-                        </div>
-                    </div>
-
-                    <div className="absolute bottom-3 right-4 text-[10px] text-[#4a4a4a] tracking-[0.2em] uppercase bg-[#0f0f0f]/80 px-2 py-1 rounded-sm backdrop-blur-sm">
-                        16px · 64×64
-                    </div>
                 </section>
 
                 <aside className="hidden lg:flex lg:flex-col lg:w-56 bg-[#1a1a1a] border-l border-[#2a2a2a]">
