@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { useToolStore } from '../../stores/toolStore';
 import { MenuBar } from '../organisms/MenuBar';
 import { Toolbar } from '../organisms/Toolbar';
@@ -14,32 +14,20 @@ import { usePaletteStore } from '../../stores/paletteStore';
 export const EditorPage: React.FC = () => {
     const { clearCanvas } = useCanvasStore();
     const { currentColor, setCurrentColor } = useToolStore();
-    const { colors: paletteColors, exportPalette, importPalette } = usePaletteStore();
+    const { 
+        colors: paletteColors, 
+        exportPalette, 
+        importPalette,
+        addColor,
+        removeColor,
+        updateColor 
+    } = usePaletteStore();
 
     const [scale, setScale] = useState(1);
     const [translateX, setTranslateX] = useState(0);
     const [translateY, setTranslateY] = useState(0);
 
     const canvasRef = useRef<CanvasHandle>(null);
-    const containerRef = useRef<HTMLDivElement>(null);
-
-    // Centrer le canvas au premier chargement
-    useEffect(() => {
-        if (!containerRef.current) return;
-        const updateCenter = () => {
-            const containerRect = containerRef.current?.getBoundingClientRect();
-            if (!containerRect) return;
-            const canvasWidth = 64 * 16;
-            const canvasHeight = 64 * 16;
-            const centerX = (containerRect.width - canvasWidth) / 2;
-            const centerY = (containerRect.height - canvasHeight) / 2;
-            setTranslateX(centerX);
-            setTranslateY(centerY);
-        };
-        updateCenter();
-        window.addEventListener('resize', updateCenter);
-        return () => window.removeEventListener('resize', updateCenter);
-    }, []);
 
     const handleZoomIn = () => {
         setScale(prev => Math.min(prev * 1.2, 5));
@@ -91,10 +79,7 @@ export const EditorPage: React.FC = () => {
                     <Toolbar orientation="vertical" />
                 </aside>
 
-                <section
-                    ref={containerRef}
-                    className="flex-1 flex items-center justify-center bg-[#0f0f0f] overflow-hidden relative"
-                >
+                <section className="flex-1 flex items-center justify-center bg-[#0f0f0f] overflow-hidden relative">
                     <Canvas
                         ref={canvasRef}
                         cellSize={16}
@@ -153,6 +138,9 @@ export const EditorPage: React.FC = () => {
                         colors={paletteColors}
                         selectedColor={currentColor}
                         onSelectColor={setCurrentColor}
+                        onAddColor={addColor}
+                        onRemoveColor={removeColor}
+                        onUpdateColor={updateColor}
                         swatchSize={28}
                         showCustomPicker={true}
                     />

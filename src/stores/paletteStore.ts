@@ -6,6 +6,9 @@ interface PaletteStore {
     setColors: (colors: string[]) => void;
     exportPalette: () => void;
     importPalette: (file: File) => Promise<void>;
+    addColor: (color: string) => void;
+    removeColor: (index: number) => void;
+    updateColor: (index: number, color: string) => void;
 }
 
 const isValidHex = (color: string): boolean => {
@@ -65,4 +68,22 @@ export const usePaletteStore = create<PaletteStore>((set, get) => ({
             reader.readAsText(file);
         });
     },
+
+    addColor: (color) => set((state) => {
+        if (!isValidHex(color)) return state;
+        if (state.colors.includes(color)) return state;
+        return { colors: [...state.colors, color] };
+    }),
+
+    removeColor: (index) => set((state) => {
+        if (state.colors.length <= 1) return state;
+        return { colors: state.colors.filter((_, i) => i !== index) };
+    }),
+
+    updateColor: (index, color) => set((state) => {
+        if (!isValidHex(color)) return state;
+        const newColors = [...state.colors];
+        newColors[index] = color;
+        return { colors: newColors };
+    }),
 }));
