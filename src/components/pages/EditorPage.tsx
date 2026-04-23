@@ -1,173 +1,188 @@
-import React, { useState, useRef } from 'react';
-import { useToolStore } from '../../stores/toolStore';
-import { MenuBar } from '../organisms/MenuBar';
-import { Toolbar } from '../organisms/Toolbar';
-import { Palette } from '../molecules/Palette';
-import { Canvas } from '../organisms/Canvas';
-import { ZoomControls } from '../atoms/ZoomControls';
-import { CopyIcon, PasteIcon, ClearIcon } from '../atoms/EditorIcons';
-import { useCanvasStore } from '../../stores/canvaStore';
-import { CanvasHandle } from '../organisms/canvas/types';
-import { TileControls } from '../molecules/TileControls';
+import React, { useRef } from 'react';
+import { Color } from '../../types';
 
-const DEFAULT_COLORS = [
-    '#000000', '#FFFFFF', '#FF0000', '#00FF00', '#0000FF',
-    '#FFFF00', '#FF00FF', '#00FFFF', '#C0C0C0', '#808080',
-    '#800000', '#808000', '#008000', '#800080', '#008080',
-    '#000080', '#FF6600', '#6600FF', '#FF0066', '#00FF66',
-    '#993366', '#66CCCC', '#FF99CC', '#CCCC00', '#996633',
-];
+export interface PaletteProps {
+    colors: Color[];
+    selectedColor: Color;
+    onSelectColor: (color: Color) => void;
+    onAddColor?: (color: Color) => void;
+    onRemoveColor?: (index: number) => void;
+    onUpdateColor?: (index: number, color: Color) => void;
+    className?: string;
+    swatchSize?: number;
+    showCustomPicker?: boolean;
+}
 
-export const EditorPage: React.FC = () => {
-    const { clearCanvas } = useCanvasStore();
-    const { currentColor, setCurrentColor } = useToolStore();
+const CustomColorIcon: React.FC<{ className?: string }> = ({ className }) => (
+    <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="10" />
+        <circle cx="12" cy="12" r="3" />
+        <path d="M5 5 L8 8" />
+        <path d="M19 5 L16 8" />
+        <path d="M5 19 L8 16" />
+        <path d="M19 19 L16 16" />
+    </svg>
+);
 
-    const [scale, setScale] = useState(1);
-    const [translateX, setTranslateX] = useState(0);
-    const [translateY, setTranslateY] = useState(0);
+const PlusIcon: React.FC<{ className?: string }> = ({ className }) => (
+    <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <line x1="12" y1="5" x2="12" y2="19" />
+        <line x1="5" y1="12" x2="19" y2="12" />
+    </svg>
+);
 
-    const canvasRef = useRef<CanvasHandle>(null);
+const CloseIcon: React.FC<{ className?: string }> = ({ className }) => (
+    <svg className={className} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <line x1="18" y1="6" x2="6" y2="18" />
+        <line x1="6" y1="6" x2="18" y2="18" />
+    </svg>
+);
 
-    const handleZoomIn = () => {
-        setScale(prev => Math.min(prev * 1.2, 5));
+export const Palette: React.FC<PaletteProps> = ({
+    colors,
+    selectedColor,
+    onSelectColor,
+    onAddColor,
+    onRemoveColor,
+    onUpdateColor,
+    className = '',
+    swatchSize = 24,
+    showCustomPicker = true,
+}) => {
+    const colorInputRef = useRef<HTMLInputElement>(null);
+    const addColorInputRef = useRef<HTMLInputElement>(null);
+
+    const handleCustomButtonClick = () => {
+        colorInputRef.current?.click();
     };
 
-    const handleZoomOut = () => {
-        setScale(prev => Math.max(prev * 0.8, 0.2));
+    const handleCustomColorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const newColor = e.target.value;
+        onSelectColor(newColor);
     };
 
-    const handleZoomReset = () => {
-        setScale(1);
-        setTranslateX(0);
-        setTranslateY(0);
+    const handleAddColor = () => {
+        if (addColorInputRef.current) {
+            addColorInputRef.current.click();
+        }
     };
 
-    const handleCopy = () => {
-        canvasRef.current?.copySelection();
+    const handleAddColorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const newColor = e.target.value;
+        onAddColor?.(newColor);
     };
 
-    const handlePaste = () => {
-        canvasRef.current?.pasteAtMouse();
+    const handleUpdateColor = (index: number) => {
+        const input = document.createElement('input');
+        input.type = 'color';
+        input.value = colors[index];
+        input.onchange = (e) => {
+            const newColor = (e.target as HTMLInputElement).value;
+            onUpdateColor?.(index, newColor);
+        };
+        input.click();
     };
 
     return (
-        <div className="flex flex-col h-screen w-screen bg-[#0d0d0d] overflow-hidden font-sans select-none">
-            <header className="flex-none h-11 bg-[#1a1a1a] border-b border-[#2a2a2a] flex items-stretch z-20">
-                <MenuBar />
-            </header>
-
-            <main className="flex flex-1 overflow-hidden">
-                <aside className="flex-none w-14 bg-[#1a1a1a] border-r border-[#2a2a2a] flex flex-col items-center py-3 gap-1">
-                    <Toolbar orientation="vertical" />
-                </aside>
-
-                <section className="flex-1 flex items-center justify-center bg-[#0f0f0f] overflow-hidden relative">
-                    <Canvas
-                        ref={canvasRef}
-                        cellSize={16}
-                        scale={scale}
-                        onScaleChange={setScale}
-                        translateX={translateX}
-                        onTranslateXChange={setTranslateX}
-                        translateY={translateY}
-                        onTranslateYChange={setTranslateY}
-                    />
-                </section>
-
-                <aside className="hidden lg:flex lg:flex-col lg:w-56 bg-[#1a1a1a] border-l border-[#2a2a2a]">
-                    <div className="px-4 py-3 border-b border-[#2a2a2a]">
-                        <span className="text-[10px] font-semibold tracking-[0.2em] text-[#666] uppercase">
-                            Layers
-                        </span>
-                    </div>
-
-                    <div className="m-2 p-2 rounded-sm bg-[#252525] border border-[#333] flex items-center gap-2 cursor-pointer hover:border-[#4a9eff] transition-colors group">
-                        <div className="w-4 h-4 rounded-sm bg-[#3a3a3a] flex-none" />
-                        <span className="text-[12px] text-[#aaa] group-hover:text-[#ddd]">Background</span>
-                        <div className="ml-auto w-2 h-2 rounded-full bg-[#4a9eff] flex-none" />
-                    </div>
-
-                    <div className="flex-1" />
-
-                    <div className="px-4 py-4 border-t border-[#2a2a2a]">
-                        <span className="text-[9px] font-semibold tracking-[0.2em] text-[#666] uppercase">
-                            Active Color
-                        </span>
-                        <div className="mt-3 flex items-center gap-3">
-                            <div
-                                className="w-10 h-10 rounded-sm border border-[#444] shadow-[inset_0_2px_4px_rgba(0,0,0,0.5)]"
-                                style={{ backgroundColor: currentColor }}
-                            />
-                            <span className="text-[11px] text-[#888] font-mono uppercase tracking-wider">
-                                {currentColor}
-                            </span>
-                        </div>
-                    </div>
-                </aside>
-            </main>
-
-            <footer className="flex-none h-14 bg-[#1a1a1a] border-t border-[#2a2a2a] flex items-center gap-4 px-6 overflow-x-auto">
-                <div
-                    className="flex-none w-8 h-8 rounded-sm border border-[#444] shadow-[inset_0_2px_4px_rgba(0,0,0,0.5)]"
-                    style={{ backgroundColor: currentColor }}
-                    title={currentColor}
-                />
-
-                <div className="flex-none w-px h-6 bg-[#2a2a2a]" />
-
-                <div className="flex-1 min-w-0">
-                    <Palette
-                        colors={DEFAULT_COLORS}
-                        selectedColor={currentColor}
-                        onSelectColor={setCurrentColor}
-                        swatchSize={28}
-                        showCustomPicker={true}
-                    />
-                </div>
-
-                <div className="flex-none w-px h-6 bg-[#2a2a2a]" />
-
-                <div className="flex items-center gap-2">
-                    <button
-                        onClick={handleCopy}
-                        className="w-8 h-8 flex items-center justify-center bg-[#252525] border border-[#333] rounded-md hover:border-[#4a9eff] hover:text-[#4a9eff] text-[#aaa] transition-all"
-                        title="Copy selection (Ctrl+C)"
+        <div className={`flex items-center gap-2 ${className}`}>
+            <div
+                className="flex overflow-x-auto gap-1 py-1 px-0.5 rounded-sm"
+                style={{
+                    scrollbarWidth: 'thin',
+                    scrollbarColor: '#4a4a4a #2a2a2a',
+                }}
+            >
+                {colors.map((color, index) => (
+                    <div
+                        key={`${color}-${index}`}
+                        className="relative group flex-none"
                     >
-                        <CopyIcon className="w-4 h-4" />
-                    </button>
+                        <button
+                            onClick={() => onSelectColor(color)}
+                            onDoubleClick={() => handleUpdateColor(index)}
+                            className={`
+                                rounded-sm transition-all duration-150 cursor-pointer
+                                hover:scale-110 hover:ring-2 hover:ring-[#4a9eff] hover:ring-offset-1 hover:ring-offset-[#1a1a1a]
+                                ${color === selectedColor
+                                    ? 'ring-2 ring-[#4a9eff] ring-offset-2 ring-offset-[#1a1a1a] scale-110'
+                                    : 'ring-1 ring-[#3a3a3a] hover:ring-[#4a9eff]'
+                                }
+                            `}
+                            style={{
+                                width: swatchSize,
+                                height: swatchSize,
+                                backgroundColor: color,
+                            }}
+                            aria-label={`Select color ${color}`}
+                            title={`${color} (double-click to edit, right-click to delete)`}
+                            onContextMenu={(e) => {
+                                e.preventDefault();
+                                onRemoveColor?.(index);
+                            }}
+                        />
+                        {onRemoveColor && (
+                            <button
+                                onClick={() => onRemoveColor(index)}
+                                className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                                title="Remove color"
+                            >
+                                <CloseIcon className="w-2.5 h-2.5" />
+                            </button>
+                        )}
+                    </div>
+                ))}
+                {onAddColor && (
+                    <>
+                        <button
+                            onClick={handleAddColor}
+                            className="flex-none w-8 h-8 rounded-md bg-[#252525] border border-[#3a3a3a] 
+                                     hover:border-[#4a9eff] hover:bg-[#2a2a2a] hover:text-[#4a9eff]
+                                     transition-all duration-150 flex items-center justify-center text-[#aaa]"
+                            title="Add current color to palette"
+                        >
+                            <PlusIcon className="w-4 h-4" />
+                        </button>
+                        <input
+                            ref={addColorInputRef}
+                            type="color"
+                            value="#FF0000"
+                            onChange={handleAddColorChange}
+                            className="sr-only"
+                            tabIndex={-1}
+                            aria-hidden="true"
+                        />
+                    </>
+                )}
+            </div>
+
+            {showCustomPicker && (
+                <>
+                    <div className="w-px h-6 bg-[#2a2a2a] flex-none" />
+
                     <button
-                        onClick={handlePaste}
-                        className="w-8 h-8 flex items-center justify-center bg-[#252525] border border-[#333] rounded-md hover:border-[#4a9eff] hover:text-[#4a9eff] text-[#aaa] transition-all"
-                        title="Paste at mouse position (Ctrl+V)"
+                        onClick={handleCustomButtonClick}
+                        className="flex-none w-8 h-8 rounded-md bg-[#252525] border border-[#3a3a3a] 
+                                 hover:border-[#4a9eff] hover:bg-[#2a2a2a] hover:text-[#4a9eff]
+                                 transition-all duration-150 flex items-center justify-center text-[#aaa]"
+                        title="Choose custom color"
+                        aria-label="Custom color"
                     >
-                        <PasteIcon className="w-4 h-4" />
+                        <CustomColorIcon className="w-4 h-4" />
                     </button>
-                </div>
 
-                <div className="flex-none w-px h-6 bg-[#2a2a2a]" />
-                <TileControls />
-
-                <ZoomControls
-                    zoomLevel={scale}
-                    onZoomIn={handleZoomIn}
-                    onZoomOut={handleZoomOut}
-                    onZoomReset={handleZoomReset}
-                />
-
-                <div className="flex-none w-px h-6 bg-[#2a2a2a]" />
-
-                <button
-                    onClick={clearCanvas}
-                    className="flex items-center gap-2 px-3 py-1.5 text-[11px] font-medium tracking-wide
-                               text-[#888] hover:text-[#cf6679]
-                               border border-[#333] hover:border-[#cf6679]/50
-                               rounded-md transition-all bg-[#252525] hover:bg-[#2a2a2a]"
-                    title="Clear canvas"
-                >
-                    <ClearIcon className="w-4 h-4" />
-                    <span>Clear</span>
-                </button>
-            </footer>
+                    <input
+                        ref={colorInputRef}
+                        type="color"
+                        value={selectedColor}
+                        onChange={handleCustomColorChange}
+                        className="sr-only"
+                        tabIndex={-1}
+                        aria-hidden="true"
+                    />
+                </>
+            )}
         </div>
     );
 };
+
+export default Palette;
