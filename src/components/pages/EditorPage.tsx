@@ -8,6 +8,7 @@ import { ZoomControls } from '../atoms/ZoomControls';
 import { CopyIcon, PasteIcon, ClearIcon } from '../atoms/EditorIcons';
 import { useCanvasStore } from '../../stores/canvaStore';
 import { CanvasHandle } from '../organisms/canvas/types';
+import { TileControls } from '../molecules/TileControls';
 
 const DEFAULT_COLORS = [
     '#000000', '#FFFFFF', '#FF0000', '#00FF00', '#0000FF',
@@ -144,6 +145,7 @@ export const EditorPage: React.FC = () => {
                 </div>
 
                 <div className="flex-none w-px h-6 bg-[#2a2a2a]" />
+                <TileControls />
 
                 <ZoomControls
                     zoomLevel={scale}

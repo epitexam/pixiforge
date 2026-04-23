@@ -12,6 +12,8 @@ interface UseCanvasRenderingProps {
     translateX: number;
     translateY: number;
     pixels: Color[];
+    tileWidth: number;
+    tileHeight: number;
 }
 
 export const useCanvasRendering = ({
@@ -23,6 +25,8 @@ export const useCanvasRendering = ({
     translateX,
     translateY,
     pixels,
+    tileWidth,
+    tileHeight,
 }: UseCanvasRenderingProps) => {
     useEffect(() => {
         const canvas = canvasRef.current;
@@ -61,5 +65,26 @@ export const useCanvasRendering = ({
             ctx.lineTo(xPos, effectiveHeight * cellSize);
             ctx.stroke();
         }
-    }, [pixels, effectiveWidth, effectiveHeight, cellSize, scale, translateX]);
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.strokeStyle = 'rgba(150, 150, 150, 0.6)';
+        ctx.lineWidth = 2;
+
+
+        for (let x = tileWidth; x < effectiveWidth; x += tileWidth) {
+            const xPos = x * cellSize;
+            ctx.moveTo(xPos, 0);
+            ctx.lineTo(xPos, effectiveHeight * cellSize);
+            ctx.stroke();
+        }
+
+        for (let y = tileHeight; y < effectiveHeight; y += tileHeight) {
+            const yPos = y * cellSize;
+            ctx.moveTo(0, yPos);
+            ctx.lineTo(effectiveWidth * cellSize, yPos);
+            ctx.stroke();
+        }
+        ctx.restore();
+    }, [pixels, effectiveWidth, effectiveHeight, cellSize, scale, translateX, tileWidth, tileHeight]);
 };
