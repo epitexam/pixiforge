@@ -2,9 +2,10 @@ import { create } from 'zustand';
 import { Color } from '../types';
 
 export const DEFAULT_COLOR: Color = '#F0F0F0';
-
 const DEFAULT_WIDTH = 32;
 const DEFAULT_HEIGHT = 32;
+const DEFAULT_TILE_WIDTH = 16;
+const DEFAULT_TILE_HEIGHT = 16;
 
 const createEmptyPixels = (width: number, height: number): Color[] => {
     return new Array(width * height).fill(DEFAULT_COLOR);
@@ -14,6 +15,10 @@ interface CanvasState {
     width: number;
     height: number;
     pixels: Color[];
+    tileWidth: number;
+    tileHeight: number;
+    selectedTile: { col: number; row: number } | null;
+    tileModeEnabled: boolean;
 }
 
 interface CanvasStore extends CanvasState {
@@ -22,12 +27,19 @@ interface CanvasStore extends CanvasState {
     clearCanvas: () => void;
     resizeCanvas: (width: number, height: number) => void;
     setAllPixels: (pixels: Color[][]) => void;
+    setTileSize: (width: number, height: number) => void;
+    selectTile: (col: number, row: number) => void;
+    setTileMode: (enabled: boolean) => void;
 }
 
 export const useCanvasStore = create<CanvasStore>((set, get) => ({
     width: DEFAULT_WIDTH,
     height: DEFAULT_HEIGHT,
     pixels: createEmptyPixels(DEFAULT_WIDTH, DEFAULT_HEIGHT),
+    tileWidth: DEFAULT_TILE_WIDTH,
+    tileHeight: DEFAULT_TILE_HEIGHT,
+    selectedTile: null,
+    tileModeEnabled: false,
 
     setPixel: (x, y, color) => set((state) => {
         if (x < 0 || x >= state.width || y < 0 || y >= state.height) return state;
@@ -59,7 +71,7 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
                 newPixels[newIndex] = state.pixels[oldIndex];
             }
         }
-        return { width, height, pixels: newPixels };
+        return { width, height, pixels: newPixels, selectedTile: null, tileModeEnabled: false };
     }),
 
     setAllPixels: (pixels2D) => set({
@@ -78,5 +90,20 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
             }
             return flat;
         })(),
+        selectedTile: null,
+        tileModeEnabled: false,
+    }),
+
+    setTileSize: (width, height) => set((state) => {
+        return { tileWidth: width, tileHeight: height, selectedTile: null, tileModeEnabled: false };
+    }),
+
+    selectTile: (col, row) => set({ selectedTile: { col, row } }),
+
+    setTileMode: (enabled) => set((state) => {
+        if (enabled && !state.selectedTile) {
+            return { tileModeEnabled: true, selectedTile: { col: 0, row: 0 } };
+        }
+        return { tileModeEnabled: enabled };
     }),
 }));

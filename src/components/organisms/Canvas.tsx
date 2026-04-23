@@ -53,8 +53,14 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(
       pixels,
       setPixel,
       getPixel,
+      tileWidth,
+      tileHeight,
+      selectedTile,
+      tileModeEnabled,
+      selectTile,
+      setTileMode,
     } = useCanvasStore();
-    const { activeTool, currentColor, setCurrentColor } = useToolStore();
+    const { activeTool, currentColor, setCurrentColor, setActiveTool } = useToolStore();
 
     const effectiveWidth = useMemo(
       () => propWidth ?? storeWidth,
@@ -116,10 +122,22 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(
       translateX,
       translateY,
       pixels,
+      tileWidth,
+      tileHeight,
     });
 
     const handlePixelAction = useCallback(
       (x: number, y: number) => {
+        if (tileModeEnabled && selectedTile) {
+          const startX = selectedTile.col * tileWidth;
+          const startY = selectedTile.row * tileHeight;
+          const endX = Math.min(startX + tileWidth, effectiveWidth);
+          const endY = Math.min(startY + tileHeight, effectiveHeight);
+          if (x < startX || x >= endX || y < startY || y >= endY) {
+            return;
+          }
+        }
+
         switch (activeTool) {
           case "pencil":
             setPixel(x, y, currentColor);
@@ -136,7 +154,7 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(
             break;
         }
       },
-      [activeTool, currentColor, setPixel, getPixel, setCurrentColor],
+      [activeTool, currentColor, setPixel, getPixel, setCurrentColor, tileModeEnabled, selectedTile, tileWidth, tileHeight, effectiveWidth, effectiveHeight],
     );
 
     const {
@@ -204,6 +222,33 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(
 
     const staticRect = useMemo(() => selectionRect, [selectionRect]);
 
+    const tileOverlay = useMemo(() => {
+      if (!tileModeEnabled || !selectedTile) return null;
+      const startX = selectedTile.col * tileWidth;
+      const startY = selectedTile.row * tileHeight;
+      const width = Math.min(tileWidth, effectiveWidth - startX);
+      const height = Math.min(tileHeight, effectiveHeight - startY);
+      const left = startX * cellSize * scale + translateX;
+      const top = startY * cellSize * scale + translateY;
+      const w = width * cellSize * scale;
+      const h = height * cellSize * scale;
+      return (
+        <div
+          style={{
+            position: "absolute",
+            left,
+            top,
+            width: w,
+            height: h,
+            border: "2px solid cyan",
+            backgroundColor: "rgba(0, 255, 255, 0.15)",
+            pointerEvents: "none",
+            zIndex: 10,
+          }}
+        />
+      );
+    }, [tileModeEnabled, selectedTile, tileWidth, tileHeight, effectiveWidth, effectiveHeight, cellSize, scale, translateX, translateY]);
+
     const getCursor = () => {
       if (isPanning) return "grabbing";
       switch (activeTool) {
@@ -211,10 +256,31 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(
           return "crosshair";
         case "picker":
           return "crosshair";
+        case "tileSelect":
+          return "crosshair";
         default:
           return "default";
       }
     };
+
+    const originalHandleMouseDown = handleMouseDown;
+    const customHandleMouseDown = useCallback((e: React.MouseEvent) => {
+      if (activeTool === "tileSelect") {
+        const rect = containerRef.current?.getBoundingClientRect();
+        if (rect) {
+          const indices = getPixelIndexFromEvent(e.clientX, e.clientY, rect);
+          if (indices) {
+            const col = Math.floor(indices.x / tileWidth);
+            const row = Math.floor(indices.y / tileHeight);
+            selectTile(col, row);
+            setTileMode(true);
+            setActiveTool("pencil");
+          }
+        }
+        return;
+      }
+      originalHandleMouseDown(e);
+    }, [activeTool, getPixelIndexFromEvent, tileWidth, tileHeight, selectTile, setTileMode, setActiveTool, originalHandleMouseDown]);
 
     return (
       <div
@@ -225,7 +291,7 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(
           height: effectiveHeight * cellSize,
           cursor: getCursor(),
         }}
-        onMouseDown={handleMouseDown}
+        onMouseDown={customHandleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseLeave}
@@ -256,6 +322,7 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(
           isActive={false}
           backgroundColor="rgba(74, 158, 255, 0.1)"
         />
+        {tileOverlay}
       </div>
     );
   },

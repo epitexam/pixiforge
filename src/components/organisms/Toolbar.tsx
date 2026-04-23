@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useToolStore, Tool } from '../../stores/toolStore';
-import { PencilIcon, EraserIcon, PickerIcon, SelectIcon } from '../atoms/ToolIcons';
+import { PencilIcon, EraserIcon, PickerIcon, SelectIcon, GridIcon } from '../atoms/ToolIcons';
 
 export interface ToolbarProps {
     orientation?: 'horizontal' | 'vertical';
@@ -12,6 +12,7 @@ const TOOLS: { id: Tool; label: string; icon: React.FC<{ className?: string }>; 
     { id: 'eraser', label: 'Eraser', icon: EraserIcon, shortcut: 'E' },
     { id: 'picker', label: 'Picker', icon: PickerIcon, shortcut: 'I' },
     { id: 'select', label: 'Select', icon: SelectIcon, shortcut: 'S' },
+    { id: 'tileSelect', label: 'Tile Select', icon: GridIcon, shortcut: 'T' },
 ];
 
 export const Toolbar: React.FC<ToolbarProps> = ({
@@ -45,6 +46,10 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                     setActiveTool('select');
                     break;
                 default:
+                    break;
+                case 't':
+                    e.preventDefault();
+                    setActiveTool('tileSelect');
                     break;
             }
         };
