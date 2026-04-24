@@ -17,6 +17,7 @@ import { useMouseEvents } from "./canvas/useMouseEvents";
 import { useKeyboardShortcuts } from "./canvas/useKeyboardShortcuts";
 import { usePreventContextMenu } from "./canvas/usePreventContextMenu";
 import { SelectionOverlay } from "./canvas/SelectionOverlay";
+import { useKeyboardSelectionClear } from "./canvas/useKeyboardSelectionClear";
 
 export interface CanvasProps {
   width?: number;
@@ -112,6 +113,14 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(
       pasteSelection,
       pasteAtMouse,
     } = useSelection(pixels, effectiveWidth, effectiveHeight, setPixel);
+
+    useKeyboardSelectionClear({
+      selectionRect,
+      setSelectionRect,
+      setPixel,
+      effectiveWidth,
+      effectiveHeight,
+    });
 
     useCanvasRendering({
       canvasRef,
