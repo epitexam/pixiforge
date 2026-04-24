@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { Toaster, toast } from 'sonner';
 import { useToolStore } from '../../stores/toolStore';
 import { MenuBar } from '../organisms/MenuBar';
 import { Toolbar } from '../organisms/Toolbar';
@@ -14,13 +15,13 @@ import { usePaletteStore } from '../../stores/paletteStore';
 export const EditorPage: React.FC = () => {
     const { clearCanvas } = useCanvasStore();
     const { currentColor, setCurrentColor } = useToolStore();
-    const { 
-        colors: paletteColors, 
-        exportPalette, 
+    const {
+        colors: paletteColors,
+        exportPalette,
         importPalette,
         addColor,
         removeColor,
-        updateColor 
+        updateColor
     } = usePaletteStore();
 
     const [scale, setScale] = useState(1);
@@ -45,10 +46,12 @@ export const EditorPage: React.FC = () => {
 
     const handleCopy = () => {
         canvasRef.current?.copySelection();
+        toast.success('Selection copied');
     };
 
     const handlePaste = () => {
         canvasRef.current?.pasteAtMouse();
+        toast.success('Selection pasted');
     };
 
     const handleImportPalette = () => {
@@ -60,16 +63,23 @@ export const EditorPage: React.FC = () => {
             if (!file) return;
             try {
                 await importPalette(file);
-                alert('Palette imported successfully');
+                toast.success('Palette imported successfully');
             } catch (err) {
-                alert('Invalid palette file');
+                toast.error('Invalid palette file');
             }
         };
         input.click();
     };
 
+    const handleClearCanvas = () => {
+        clearCanvas();
+        toast.success('Canvas cleared');
+    };
+
     return (
         <div className="flex flex-col h-screen w-screen bg-[#0d0d0d] overflow-hidden font-sans select-none">
+            <Toaster position="top-center" richColors />
+
             <header className="flex-none h-11 bg-[#1a1a1a] border-b border-[#2a2a2a] flex items-stretch z-20">
                 <MenuBar />
             </header>
@@ -79,7 +89,6 @@ export const EditorPage: React.FC = () => {
                     <Toolbar orientation="vertical" />
                 </aside>
 
-                {/* Section avec centrage CSS uniquement */}
                 <section className="flex-1 flex items-center justify-center bg-[#0f0f0f] overflow-hidden relative">
                     <Canvas
                         ref={canvasRef}
@@ -91,20 +100,41 @@ export const EditorPage: React.FC = () => {
                         translateY={translateY}
                         onTranslateYChange={setTranslateY}
                     />
-                    {/* Overlay d'information */}
                     <div className="absolute bottom-3 right-4 text-[10px] text-[#4a4a4a] tracking-[0.2em] uppercase bg-[#0f0f0f]/80 px-2 py-1 rounded-sm backdrop-blur-sm pointer-events-none">
                         16px · 64×64
                     </div>
                 </section>
 
                 <aside className="hidden lg:flex lg:flex-col lg:w-56 bg-[#1a1a1a] border-l border-[#2a2a2a]">
-                    {/* ... (inchangé) ... */}
+                    <div className="px-4 py-3 border-b border-[#2a2a2a]">
+                        <span className="text-[10px] font-semibold tracking-[0.2em] text-[#666] uppercase">
+                            Layers
+                        </span>
+                    </div>
+                    <div className="m-2 p-2 rounded-sm bg-[#252525] border border-[#333] flex items-center gap-2 cursor-pointer hover:border-[#4a9eff] transition-colors group">
+                        <div className="w-4 h-4 rounded-sm bg-[#3a3a3a] flex-none" />
+                        <span className="text-[12px] text-[#aaa] group-hover:text-[#ddd]">Background</span>
+                        <div className="ml-auto w-2 h-2 rounded-full bg-[#4a9eff] flex-none" />
+                    </div>
+                    <div className="flex-1" />
+                    <div className="px-4 py-4 border-t border-[#2a2a2a]">
+                        <span className="text-[9px] font-semibold tracking-[0.2em] text-[#666] uppercase">
+                            Active Color
+                        </span>
+                        <div className="mt-3 flex items-center gap-3">
+                            <div
+                                className="w-10 h-10 rounded-sm border border-[#444] shadow-[inset_0_2px_4px_rgba(0,0,0,0.5)]"
+                                style={{ backgroundColor: currentColor }}
+                            />
+                            <span className="text-[11px] text-[#888] font-mono uppercase tracking-wider">
+                                {currentColor}
+                            </span>
+                        </div>
+                    </div>
                 </aside>
             </main>
 
-            {/* Footer avec hauteur augmentée et meilleur espacement */}
             <footer className="flex-none h-16 bg-[#1a1a1a] border-t border-[#2a2a2a] flex items-center gap-4 px-6 overflow-x-auto">
-                {/* Échantillon de couleur active */}
                 <div
                     className="flex-none w-10 h-10 rounded-sm border border-[#444] shadow-[inset_0_2px_4px_rgba(0,0,0,0.5)]"
                     style={{ backgroundColor: currentColor }}
@@ -113,7 +143,6 @@ export const EditorPage: React.FC = () => {
 
                 <div className="flex-none w-px h-8 bg-[#2a2a2a]" />
 
-                {/* Palette avec plus d'espace vertical */}
                 <div className="flex-1 min-w-0 py-1">
                     <Palette
                         colors={paletteColors}
@@ -129,7 +158,6 @@ export const EditorPage: React.FC = () => {
 
                 <div className="flex-none w-px h-8 bg-[#2a2a2a]" />
 
-                {/* Boutons import/export */}
                 <div className="flex items-center gap-2">
                     <button
                         onClick={exportPalette}
@@ -182,7 +210,7 @@ export const EditorPage: React.FC = () => {
                 <div className="flex-none w-px h-8 bg-[#2a2a2a]" />
 
                 <button
-                    onClick={clearCanvas}
+                    onClick={handleClearCanvas}
                     className="flex items-center gap-2 px-4 py-2 text-[11px] font-medium tracking-wide
                                text-[#888] hover:text-[#cf6679]
                                border border-[#333] hover:border-[#cf6679]/50

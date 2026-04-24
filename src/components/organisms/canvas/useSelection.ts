@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import { Color } from "../../../types";
 import { DEFAULT_COLOR } from "../../../stores/canvaStore";
 import { Rect } from "./types";
+import { toast } from "sonner";
 
 export const useSelection = (
   pixels: Color[],
@@ -23,7 +24,7 @@ export const useSelection = (
 
   const copySelection = useCallback(() => {
     if (!selectionRect) {
-      console.log("No selection to copy");
+      toast.success('No selection to copy');
       return;
     }
     const { x, y, width, height } = selectionRect;
@@ -43,7 +44,7 @@ export const useSelection = (
       copied.push(row);
     }
     setCopiedPixels(copied);
-    console.log("Selection copied", { width, height });
+    toast.success(`Selection copied (${width} x ${height})`);
   }, [selectionRect, pixels, effectiveWidth, effectiveHeight]);
 
   const pasteSelection = useCallback(
@@ -52,7 +53,7 @@ export const useSelection = (
       let pasteX = targetX;
       let pasteY = targetY;
       if (pasteX === undefined || pasteY === undefined) {
-        console.warn("No paste position");
+        toast.error("No paste position available");
         return;
       }
       const width = copiedPixels[0].length;
@@ -66,7 +67,7 @@ export const useSelection = (
           }
         }
       }
-      console.log("Pasted at", pasteX, pasteY);
+      toast.success(`Pasted at (${pasteX}, ${pasteY})`);
     },
     [copiedPixels, setPixel, effectiveWidth, effectiveHeight],
   );
@@ -85,7 +86,9 @@ export const useSelection = (
           pasteSelection(indices.x, indices.y);
         }
       } else {
-        console.warn("No mouse position available for paste");
+        toast.error("Paste failed", {
+          description: "No mouse position available"
+        });
       }
     },
     [pasteSelection],
