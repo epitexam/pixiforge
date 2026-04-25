@@ -1,9 +1,9 @@
 use serde::{Deserialize, Serialize};
 use std::fs;
-use std::sync::{Arc, Mutex};
-use std::thread;
 use tauri::{command, AppHandle};
 use tauri_plugin_dialog::{DialogExt, FilePath};
+use tauri::async_runtime::spawn_blocking;
+use std::sync::mpsc;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct FileData {
@@ -12,19 +12,19 @@ pub struct FileData {
 }
 
 #[command]
-pub fn open_file(app: AppHandle) -> Result<FileData, String> {
-    let result: Arc<Mutex<Option<FilePath>>> = Arc::new(Mutex::new(None));
-    let result_clone = result.clone();
+pub async fn open_file(app: AppHandle) -> Result<FileData, String> {
+    let (tx, rx) = mpsc::channel();
+    app.dialog()
+        .file()
+        .pick_file(move |file_path| {
+            let _ = tx.send(file_path);
+        });
 
-    app.dialog().file().pick_file(Box::new(move |fp| {
-        *result_clone.lock().unwrap() = fp;
-    }));
+    let file_path = spawn_blocking(move || {
+        rx.recv().unwrap()
+    }).await.map_err(|_| "Failed to receive file path")?;
 
-    while result.lock().unwrap().is_none() {
-        thread::sleep(std::time::Duration::from_millis(10));
-    }
-
-    let file_path = result.lock().unwrap().take().unwrap();
+    let file_path = file_path.ok_or("No file selected")?;
 
     let content = match &file_path {
         FilePath::Path(path) => fs::read_to_string(path).map_err(|e| e.to_string())?,
@@ -43,28 +43,25 @@ pub fn open_file(app: AppHandle) -> Result<FileData, String> {
 }
 
 #[command]
-pub fn save_file(
+pub async fn save_file(
     app: AppHandle,
     content: String,
     default_path: Option<String>,
 ) -> Result<String, String> {
-    let result: Arc<Mutex<Option<FilePath>>> = Arc::new(Mutex::new(None));
-    let result_clone = result.clone();
-
+    let (tx, rx) = mpsc::channel();
     let mut dialog = app.dialog().file();
     if let Some(path) = default_path {
         dialog = dialog.set_file_name(&path);
     }
+    dialog.save_file(move |file_path| {
+        let _ = tx.send(file_path);
+    });
 
-    dialog.save_file(Box::new(move |fp| {
-        *result_clone.lock().unwrap() = fp;
-    }));
+    let file_path = spawn_blocking(move || {
+        rx.recv().unwrap()
+    }).await.map_err(|_| "Failed to receive file path")?;
 
-    while result.lock().unwrap().is_none() {
-        thread::sleep(std::time::Duration::from_millis(10));
-    }
-
-    let file_path = result.lock().unwrap().take().unwrap();
+    let file_path = file_path.ok_or("Save cancelled")?;
 
     match &file_path {
         FilePath::Path(path) => fs::write(path, content).map_err(|e| e.to_string())?,
