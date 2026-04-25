@@ -10,4 +10,5 @@ export interface CanvasHandle {
   pasteSelection: (x?: number, y?: number) => void;
   pasteAtMouse: () => void;
   hasSelection: () => boolean;
+  getCanvas: () => HTMLCanvasElement | null;
 }

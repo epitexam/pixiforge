@@ -6,7 +6,7 @@ import { Toolbar } from '../organisms/Toolbar';
 import { Palette } from '../molecules/Palette';
 import { Canvas } from '../organisms/Canvas';
 import { ZoomControls } from '../atoms/ZoomControls';
-import { CopyIcon, PasteIcon, ClearIcon, DownloadIcon, UploadIcon } from '../atoms/EditorIcons';
+import { CopyIcon, PasteIcon, ClearIcon, DownloadIcon, UploadIcon, ImageIcon } from '../atoms/EditorIcons';
 import { useCanvasStore } from '../../stores/canvaStore';
 import { CanvasHandle } from '../organisms/canvas/types';
 import { TileControls } from '../molecules/TileControls';
@@ -52,6 +52,19 @@ export const EditorPage: React.FC = () => {
     const handlePaste = () => {
         canvasRef.current?.pasteAtMouse();
         toast.success('Selection pasted');
+    };
+
+    const handleExportPNG = () => {
+        const canvas = canvasRef.current?.getCanvas();
+        if (!canvas) {
+            toast.error('Canvas not available');
+            return;
+        }
+        const link = document.createElement('a');
+        link.download = 'pixiforge.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        toast.success('PNG exported');
     };
 
     const handleImportPalette = () => {
@@ -206,6 +219,20 @@ export const EditorPage: React.FC = () => {
                     onZoomOut={handleZoomOut}
                     onZoomReset={handleZoomReset}
                 />
+
+                <div className="flex-none w-px h-8 bg-[#2a2a2a]" />
+
+                <button
+                    onClick={handleExportPNG}
+                    className="flex items-center gap-2 px-4 py-2 text-[11px] font-medium tracking-wide
+                               text-[#888] hover:text-[#4a9eff]
+                               border border-[#333] hover:border-[#4a9eff]
+                               rounded-md transition-all bg-[#252525] hover:bg-[#2a2a2a]"
+                    title="Export as PNG"
+                >
+                    <ImageIcon className="w-4 h-4" />
+                    <span>PNG</span>
+                </button>
 
                 <div className="flex-none w-px h-8 bg-[#2a2a2a]" />
 

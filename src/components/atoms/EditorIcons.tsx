@@ -39,3 +39,11 @@ export const UploadIcon: React.FC<{ className?: string }> = ({ className }) => (
         <line x1="12" y1="3" x2="12" y2="15" />
     </svg>
 );
+
+export const ImageIcon: React.FC<{ className?: string }> = ({ className }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <rect x="2" y="2" width="20" height="20" rx="2" ry="2" />
+        <circle cx="8.5" cy="8.5" r="2.5" />
+        <polyline points="21 15 16 10 5 21" />
+    </svg>
+);

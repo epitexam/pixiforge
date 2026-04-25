@@ -205,6 +205,7 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(
         pasteSelection,
         pasteAtMouse: pasteAtMouseHandler,
         hasSelection: () => !!selectionRect,
+        getCanvas: () => canvasRef.current,
       }),
       [copySelection, pasteSelection, pasteAtMouseHandler, selectionRect],
     );

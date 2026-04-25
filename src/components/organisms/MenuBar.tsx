@@ -17,6 +17,10 @@ export const MenuBar: React.FC<MenuBarProps> = ({ className = '' }) => {
     };
 
     const handleOpen = async () => {
+        if (typeof invoke !== 'function') {
+            toast.error('Tauri API not available.`.');
+            return;
+        }
         try {
             const result = await invoke<{ path?: string; content: string }>('open_file');
             const data = JSON.parse(result.content);
@@ -32,6 +36,10 @@ export const MenuBar: React.FC<MenuBarProps> = ({ className = '' }) => {
     };
 
     const handleSave = async () => {
+        if (typeof invoke !== 'function') {
+            toast.error('Tauri API not available.`.');
+            return;
+        }
         try {
             const { width, height, pixels } = useCanvasStore.getState();
             const data = { version: '1.0', width, height, pixels };
