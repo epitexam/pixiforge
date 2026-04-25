@@ -68,7 +68,6 @@ export const EditorPage: React.FC = () => {
             link.click();
             toast.success('PNG exported with grid');
         } else {
-
             const { width, height, pixels: pixels1D } = useCanvasStore.getState();
             const cellSize = 16;
             const offscreen = document.createElement('canvas');
@@ -175,7 +174,7 @@ export const EditorPage: React.FC = () => {
                 </aside>
             </main>
 
-            <footer className="flex-none h-16 bg-[#1a1a1a] border-t border-[#2a2a2a] flex items-center gap-4 px-6 overflow-x-auto">
+            <footer className="flex-none h-20 bg-[#1a1a1a] border-t border-[#2a2a2a] flex items-center gap-6 px-6 overflow-x-auto">
                 <div
                     className="flex-none w-10 h-10 rounded-sm border border-[#444] shadow-[inset_0_2px_4px_rgba(0,0,0,0.5)]"
                     style={{ backgroundColor: currentColor }}
@@ -184,7 +183,7 @@ export const EditorPage: React.FC = () => {
 
                 <div className="flex-none w-px h-8 bg-[#2a2a2a]" />
 
-                <div className="flex-1 min-w-0 py-1">
+                <div className="flex-1 min-w-0 py-2">
                     <Palette
                         colors={paletteColors}
                         selectedColor={currentColor}
