@@ -46,11 +46,10 @@ export const Palette: React.FC<PaletteProps> = ({
     onRemoveColor,
     onUpdateColor,
     className = '',
-    swatchSize = 24,
+    swatchSize = 28,
     showCustomPicker = true,
 }) => {
     const colorInputRef = useRef<HTMLInputElement>(null);
-    const addButtonRef = useRef<HTMLButtonElement>(null);
 
     const handleCustomButtonClick = () => {
         colorInputRef.current?.click();
@@ -91,9 +90,9 @@ export const Palette: React.FC<PaletteProps> = ({
     };
 
     return (
-        <div className={`flex items-center gap-2 ${className}`}>
+        <div className={`flex flex-nowrap items-center gap-3 ${className}`}>
             <div
-                className="flex overflow-x-auto gap-1 py-1 px-0.5 rounded-sm"
+                className="flex overflow-x-auto gap-2 py-2 px-1 rounded-sm"
                 style={{
                     scrollbarWidth: 'thin',
                     scrollbarColor: '#4a4a4a #2a2a2a',
@@ -112,7 +111,7 @@ export const Palette: React.FC<PaletteProps> = ({
                                 w-full h-full rounded-sm transition-all duration-150 cursor-pointer
                                 hover:scale-110 hover:ring-2 hover:ring-[#4a9eff] hover:ring-offset-1 hover:ring-offset-[#1a1a1a]
                                 ${color === selectedColor 
-                                    ? 'ring-2 ring-[#4a9eff] ring-offset-2 ring-offset-[#1a1a1a] scale-110' 
+                                    ? 'ring-2 ring-[#4a9eff] ring-offset-2 ring-offset-[#1a1a1a] scale-105' 
                                     : 'ring-1 ring-[#3a3a3a] hover:ring-[#4a9eff]'
                                 }
                             `}
@@ -123,10 +122,10 @@ export const Palette: React.FC<PaletteProps> = ({
                         {onRemoveColor && colors.length > 1 && (
                             <button
                                 onClick={(e) => handleRemoveColor(index, e)}
-                                className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                                className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
                                 aria-label="Remove color"
                             >
-                                <CloseIcon className="w-2 h-2" />
+                                <CloseIcon className="w-2.5 h-2.5" />
                             </button>
                         )}
                     </div>
@@ -139,23 +138,23 @@ export const Palette: React.FC<PaletteProps> = ({
                         title="Add custom color"
                         aria-label="Add color"
                     >
-                        <PlusIcon className="w-4 h-4" />
+                        <PlusIcon className="w-5 h-5" />
                     </button>
                 )}
             </div>
 
             {showCustomPicker && (
                 <>
-                    <div className="w-px h-6 bg-[#2a2a2a] flex-none" />
+                    <div className="flex-none w-px h-8 bg-[#2a2a2a]" />
                     <button
                         onClick={handleCustomButtonClick}
-                        className="flex-none w-8 h-8 rounded-md bg-[#252525] border border-[#3a3a3a] 
+                        className="flex-none w-9 h-9 rounded-md bg-[#252525] border border-[#3a3a3a] 
                                  hover:border-[#4a9eff] hover:bg-[#2a2a2a] hover:text-[#4a9eff]
                                  transition-all duration-150 flex items-center justify-center text-[#aaa]"
                         title="Choose custom color"
                         aria-label="Custom color"
                     >
-                        <CustomColorIcon className="w-4 h-4" />
+                        <CustomColorIcon className="w-5 h-5" />
                     </button>
                     <input
                         ref={colorInputRef}
