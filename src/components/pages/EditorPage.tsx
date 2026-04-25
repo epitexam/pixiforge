@@ -6,7 +6,7 @@ import { Toolbar } from '../organisms/Toolbar';
 import { Palette } from '../molecules/Palette';
 import { Canvas } from '../organisms/Canvas';
 import { ZoomControls } from '../atoms/ZoomControls';
-import { CopyIcon, PasteIcon, ClearIcon, DownloadIcon, UploadIcon, ImageIcon } from '../atoms/EditorIcons';
+import { CopyIcon, PasteIcon, ClearIcon, DownloadIcon, UploadIcon, ImageIcon, GridIcon } from '../atoms/EditorIcons';
 import { useCanvasStore } from '../../stores/canvaStore';
 import { CanvasHandle } from '../organisms/canvas/types';
 import { TileControls } from '../molecules/TileControls';
@@ -27,6 +27,7 @@ export const EditorPage: React.FC = () => {
     const [scale, setScale] = useState(1);
     const [translateX, setTranslateX] = useState(0);
     const [translateY, setTranslateY] = useState(0);
+    const [exportWithGrid, setExportWithGrid] = useState(true);
 
     const canvasRef = useRef<CanvasHandle>(null);
 
@@ -55,16 +56,43 @@ export const EditorPage: React.FC = () => {
     };
 
     const handleExportPNG = () => {
-        const canvas = canvasRef.current?.getCanvas();
-        if (!canvas) {
-            toast.error('Canvas not available');
-            return;
+        if (exportWithGrid) {
+            const canvas = canvasRef.current?.getCanvas();
+            if (!canvas) {
+                toast.error('Canvas not available');
+                return;
+            }
+            const link = document.createElement('a');
+            link.download = 'pixiforge.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+            toast.success('PNG exported with grid');
+        } else {
+
+            const { width, height, pixels: pixels1D } = useCanvasStore.getState();
+            const cellSize = 16;
+            const offscreen = document.createElement('canvas');
+            offscreen.width = width * cellSize;
+            offscreen.height = height * cellSize;
+            const ctx = offscreen.getContext('2d');
+            if (!ctx) {
+                toast.error('Failed to create export canvas');
+                return;
+            }
+            for (let y = 0; y < height; y++) {
+                for (let x = 0; x < width; x++) {
+                    const index = y * width + x;
+                    const color = pixels1D[index] ?? '#F0F0F0';
+                    ctx.fillStyle = color;
+                    ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
+                }
+            }
+            const link = document.createElement('a');
+            link.download = 'pixiforge_nogrid.png';
+            link.href = offscreen.toDataURL('image/png');
+            link.click();
+            toast.success('PNG exported without grid');
         }
-        const link = document.createElement('a');
-        link.download = 'pixiforge.png';
-        link.href = canvas.toDataURL('image/png');
-        link.click();
-        toast.success('PNG exported');
     };
 
     const handleImportPalette = () => {
@@ -222,17 +250,30 @@ export const EditorPage: React.FC = () => {
 
                 <div className="flex-none w-px h-8 bg-[#2a2a2a]" />
 
-                <button
-                    onClick={handleExportPNG}
-                    className="flex items-center gap-2 px-4 py-2 text-[11px] font-medium tracking-wide
-                               text-[#888] hover:text-[#4a9eff]
-                               border border-[#333] hover:border-[#4a9eff]
-                               rounded-md transition-all bg-[#252525] hover:bg-[#2a2a2a]"
-                    title="Export as PNG"
-                >
-                    <ImageIcon className="w-4 h-4" />
-                    <span>PNG</span>
-                </button>
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={handleExportPNG}
+                        className="flex items-center gap-2 px-4 py-2 text-[11px] font-medium tracking-wide
+                                   text-[#888] hover:text-[#4a9eff]
+                                   border border-[#333] hover:border-[#4a9eff]
+                                   rounded-md transition-all bg-[#252525] hover:bg-[#2a2a2a]"
+                        title="Export as PNG"
+                    >
+                        <ImageIcon className="w-4 h-4" />
+                        <span>PNG</span>
+                    </button>
+                    <button
+                        onClick={() => setExportWithGrid(!exportWithGrid)}
+                        className={`w-9 h-9 flex items-center justify-center rounded-md border transition-all
+                                   ${exportWithGrid
+                                ? 'bg-[#4a9eff] text-white border-[#4a9eff]'
+                                : 'bg-[#252525] text-[#888] border-[#333] hover:border-[#4a9eff] hover:text-[#4a9eff]'
+                            }`}
+                        title={exportWithGrid ? "Export includes grid" : "Export without grid"}
+                    >
+                        <GridIcon className="w-4 h-4" />
+                    </button>
+                </div>
 
                 <div className="flex-none w-px h-8 bg-[#2a2a2a]" />
 
