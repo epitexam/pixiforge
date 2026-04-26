@@ -1,4 +1,5 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
+import { toast } from 'sonner';
 import { Color } from '../../types';
 
 export interface PaletteProps {
@@ -50,71 +51,129 @@ export const Palette: React.FC<PaletteProps> = ({
     showCustomPicker = true,
 }) => {
     const colorInputRef = useRef<HTMLInputElement>(null);
+    const [showAddModal, setShowAddModal] = useState(false);
+    const [tempColor, setTempColor] = useState('#FF0000');
+    const [editingIndex, setEditingIndex] = useState<number | null>(null);
+    const [showEditModal, setShowEditModal] = useState(false);
+    const addColorInputRef = useRef<HTMLInputElement>(null);
+    const editColorInputRef = useRef<HTMLInputElement>(null);
+    const modalRef = useRef<HTMLDivElement>(null);
 
-    const handleCustomButtonClick = () => {
-        colorInputRef.current?.click();
-    };
-
-    const handleCustomColorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const newColor = e.target.value;
-        onSelectColor(newColor);
-    };
-
-    const handleAddColor = () => {
-        if (!onAddColor) return;
-        const input = document.createElement('input');
-        input.type = 'color';
-        input.value = '#FF0000';
-        input.onchange = (e) => {
-            const newColor = (e.target as HTMLInputElement).value;
-            onAddColor(newColor);
+    useEffect(() => {
+        if (!showAddModal && !showEditModal) return;
+        const handleTab = (e: KeyboardEvent) => {
+            if (e.key === 'Tab') {
+                const focusableElements = modalRef.current?.querySelectorAll('button, input, [tabindex]:not([tabindex="-1"])');
+                if (focusableElements && focusableElements.length) {
+                    const first = focusableElements[0] as HTMLElement;
+                    const last = focusableElements[focusableElements.length - 1] as HTMLElement;
+                    if (e.shiftKey && document.activeElement === first) {
+                        e.preventDefault();
+                        last.focus();
+                    } else if (!e.shiftKey && document.activeElement === last) {
+                        e.preventDefault();
+                        first.focus();
+                    }
+                }
+            }
         };
-        input.click();
-    };
+        window.addEventListener('keydown', handleTab);
+        return () => window.removeEventListener('keydown', handleTab);
+    }, [showAddModal, showEditModal]);
 
-    const handleUpdateColor = (index: number) => {
-        if (!onUpdateColor) return;
-        const input = document.createElement('input');
-        input.type = 'color';
-        input.value = colors[index];
-        input.onchange = (e) => {
-            const newColor = (e.target as HTMLInputElement).value;
-            onUpdateColor(index, newColor);
+    useEffect(() => {
+        const handleGlobalShortcut = (e: KeyboardEvent) => {
+            if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'A') {
+                e.preventDefault();
+                handleOpenAddModal();
+            }
         };
-        input.click();
+        window.addEventListener('keydown', handleGlobalShortcut);
+        return () => window.removeEventListener('keydown', handleGlobalShortcut);
+    }, []);
+
+    useEffect(() => {
+        if (showAddModal && addColorInputRef.current) addColorInputRef.current.focus();
+        if (showEditModal && editColorInputRef.current) editColorInputRef.current.focus();
+    }, [showAddModal, showEditModal]);
+
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (showAddModal) {
+                if (e.key === 'Escape') handleCancelAdd();
+                if (e.key === 'Enter') handleConfirmAdd();
+            }
+            if (showEditModal) {
+                if (e.key === 'Escape') handleCancelEdit();
+                if (e.key === 'Enter') handleConfirmEdit();
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [showAddModal, showEditModal, tempColor, editingIndex]);
+
+    const handleCustomButtonClick = () => colorInputRef.current?.click();
+    const handleCustomColorChange = (e: React.ChangeEvent<HTMLInputElement>) => onSelectColor(e.target.value);
+
+    const handleOpenAddModal = () => {
+        setTempColor('#FF0000');
+        setShowAddModal(true);
+    };
+    const handleConfirmAdd = () => {
+        if (onAddColor) {
+            if (colors.includes(tempColor)) {
+                toast.warning('Color already in palette');
+                return;
+            }
+            onAddColor(tempColor);
+            toast.success('Color added');
+        }
+        setShowAddModal(false);
+    };
+    const handleCancelAdd = () => setShowAddModal(false);
+
+    const handleOpenEditModal = (index: number) => {
+        setEditingIndex(index);
+        setTempColor(colors[index]);
+        setShowEditModal(true);
+    };
+    const handleConfirmEdit = () => {
+        if (editingIndex !== null && onUpdateColor) {
+            onUpdateColor(editingIndex, tempColor);
+            toast.success('Color updated');
+        }
+        setShowEditModal(false);
+        setEditingIndex(null);
+    };
+    const handleCancelEdit = () => {
+        setShowEditModal(false);
+        setEditingIndex(null);
     };
 
     const handleRemoveColor = (index: number, e: React.MouseEvent) => {
         e.stopPropagation();
-        if (onRemoveColor) onRemoveColor(index);
+        if (onRemoveColor) {
+            onRemoveColor(index);
+            toast.success('Color removed');
+        }
+    };
+
+    const handleBackdropClick = (e: React.MouseEvent, modalType: 'add' | 'edit') => {
+        if (e.target === e.currentTarget) {
+            if (modalType === 'add') handleCancelAdd();
+            else handleCancelEdit();
+        }
     };
 
     return (
         <div className={`flex flex-nowrap items-center gap-3 ${className}`}>
-            <div
-                className="flex overflow-x-auto gap-2 py-2 px-1 rounded-sm"
-                style={{
-                    scrollbarWidth: 'thin',
-                    scrollbarColor: '#4a4a4a #2a2a2a',
-                }}
-            >
+            <div className="flex overflow-x-auto gap-2 py-2 px-1 rounded-sm" style={{ scrollbarWidth: 'thin', scrollbarColor: '#4a4a4a #2a2a2a' }}>
                 {colors.map((color, index) => (
-                    <div
-                        key={`${color}-${index}`}
-                        className="relative group flex-none"
-                        style={{ width: swatchSize, height: swatchSize }}
-                    >
+                    <div key={`${color}-${index}`} className="relative group flex-none" style={{ width: swatchSize, height: swatchSize }}>
                         <button
                             onClick={() => onSelectColor(color)}
-                            onDoubleClick={() => handleUpdateColor(index)}
-                            className={`
-                                w-full h-full rounded-sm transition-all duration-150 cursor-pointer
-                                hover:scale-110 hover:ring-2 hover:ring-[#4a9eff] hover:ring-offset-1 hover:ring-offset-[#1a1a1a]
-                                ${color === selectedColor 
-                                    ? 'ring-2 ring-[#4a9eff] ring-offset-2 ring-offset-[#1a1a1a] scale-105' 
-                                    : 'ring-1 ring-[#3a3a3a] hover:ring-[#4a9eff]'
-                                }
-                            `}
+                            onDoubleClick={() => handleOpenEditModal(index)}
+                            className={`w-full h-full rounded-sm transition-all duration-150 cursor-pointer hover:scale-110 hover:ring-2 hover:ring-[#4a9eff] hover:ring-offset-1 hover:ring-offset-[#1a1a1a] ${color === selectedColor ? 'ring-2 ring-[#4a9eff] ring-offset-2 ring-offset-[#1a1a1a] scale-105' : 'ring-1 ring-[#3a3a3a] hover:ring-[#4a9eff]'}`}
                             style={{ backgroundColor: color }}
                             aria-label={`Select color ${color}`}
                             title={color}
@@ -132,10 +191,10 @@ export const Palette: React.FC<PaletteProps> = ({
                 ))}
                 {onAddColor && (
                     <button
-                        onClick={handleAddColor}
+                        onClick={handleOpenAddModal}
                         className="flex-none rounded-sm transition-all duration-150 cursor-pointer hover:scale-110 hover:ring-2 hover:ring-[#4a9eff] hover:ring-offset-1 hover:ring-offset-[#1a1a1a] bg-[#252525] border border-[#3a3a3a] flex items-center justify-center text-[#aaa] hover:text-[#4a9eff]"
                         style={{ width: swatchSize, height: swatchSize }}
-                        title="Add custom color"
+                        title="Add custom color (Ctrl+Shift+A)"
                         aria-label="Add color"
                     >
                         <PlusIcon className="w-5 h-5" />
@@ -148,9 +207,7 @@ export const Palette: React.FC<PaletteProps> = ({
                     <div className="flex-none w-px h-8 bg-[#2a2a2a]" />
                     <button
                         onClick={handleCustomButtonClick}
-                        className="flex-none w-9 h-9 rounded-md bg-[#252525] border border-[#3a3a3a] 
-                                 hover:border-[#4a9eff] hover:bg-[#2a2a2a] hover:text-[#4a9eff]
-                                 transition-all duration-150 flex items-center justify-center text-[#aaa]"
+                        className="flex-none w-9 h-9 rounded-md bg-[#252525] border border-[#3a3a3a] hover:border-[#4a9eff] hover:bg-[#2a2a2a] hover:text-[#4a9eff] transition-all duration-150 flex items-center justify-center text-[#aaa]"
                         title="Choose custom color"
                         aria-label="Custom color"
                     >
@@ -166,6 +223,62 @@ export const Palette: React.FC<PaletteProps> = ({
                         aria-hidden="true"
                     />
                 </>
+            )}
+
+            {showAddModal && (
+                <div
+                    className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 transition-opacity duration-200"
+                    onClick={(e) => handleBackdropClick(e, 'add')}
+                >
+                    <div ref={modalRef} className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-5 shadow-xl w-96 transform transition-all duration-200 scale-100">
+                        <h3 className="text-sm font-semibold text-white mb-4">Add New Color</h3>
+                        <div className="flex items-center gap-4 mb-4">
+                            <input
+                                ref={addColorInputRef}
+                                type="color"
+                                value={tempColor}
+                                onChange={(e) => setTempColor(e.target.value)}
+                                className="w-16 h-16 rounded border border-[#333] cursor-pointer bg-transparent"
+                            />
+                            <div className="flex-1">
+                                <div className="text-xs text-[#888] mb-1">Preview</div>
+                                <div className="w-full h-10 rounded border border-[#333]" style={{ backgroundColor: tempColor }} />
+                            </div>
+                        </div>
+                        <div className="flex justify-end gap-3">
+                            <button onClick={handleCancelAdd} className="px-3 py-1.5 text-xs font-medium bg-[#252525] border border-[#333] rounded-md hover:bg-[#2a2a2a] text-[#aaa] transition">Cancel</button>
+                            <button onClick={handleConfirmAdd} className="px-3 py-1.5 text-xs font-medium bg-[#4a9eff] border border-[#4a9eff] rounded-md hover:bg-[#3a8eff] text-white transition">Add</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {showEditModal && (
+                <div
+                    className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 transition-opacity duration-200"
+                    onClick={(e) => handleBackdropClick(e, 'edit')}
+                >
+                    <div ref={modalRef} className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-5 shadow-xl w-96 transform transition-all duration-200 scale-100">
+                        <h3 className="text-sm font-semibold text-white mb-4">Edit Color</h3>
+                        <div className="flex items-center gap-4 mb-4">
+                            <input
+                                ref={editColorInputRef}
+                                type="color"
+                                value={tempColor}
+                                onChange={(e) => setTempColor(e.target.value)}
+                                className="w-16 h-16 rounded border border-[#333] cursor-pointer bg-transparent"
+                            />
+                            <div className="flex-1">
+                                <div className="text-xs text-[#888] mb-1">Preview</div>
+                                <div className="w-full h-10 rounded border border-[#333]" style={{ backgroundColor: tempColor }} />
+                            </div>
+                        </div>
+                        <div className="flex justify-end gap-3">
+                            <button onClick={handleCancelEdit} className="px-3 py-1.5 text-xs font-medium bg-[#252525] border border-[#333] rounded-md hover:bg-[#2a2a2a] text-[#aaa] transition">Cancel</button>
+                            <button onClick={handleConfirmEdit} className="px-3 py-1.5 text-xs font-medium bg-[#4a9eff] border border-[#4a9eff] rounded-md hover:bg-[#3a8eff] text-white transition">Save</button>
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
     );
