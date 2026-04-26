@@ -230,24 +230,26 @@ export const Palette: React.FC<PaletteProps> = ({
                     className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 transition-opacity duration-200"
                     onClick={(e) => handleBackdropClick(e, 'add')}
                 >
-                    <div ref={modalRef} className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-5 shadow-xl w-96 transform transition-all duration-200 scale-100">
-                        <h3 className="text-sm font-semibold text-white mb-4">Add New Color</h3>
-                        <div className="flex items-center gap-4 mb-4">
+                    <div ref={modalRef} className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-6 shadow-xl w-96 transform transition-all duration-200 scale-100">
+                        <h3 className="text-base font-bold text-white mb-2">Add a New Color</h3>
+                        <p className="text-xs text-[#888] mb-4">Use the picker below to select a color, then click "Add".</p>
+                        <div className="flex items-center gap-4 mb-5">
                             <input
                                 ref={addColorInputRef}
                                 type="color"
                                 value={tempColor}
                                 onChange={(e) => setTempColor(e.target.value)}
-                                className="w-16 h-16 rounded border border-[#333] cursor-pointer bg-transparent"
+                                className="w-16 h-16 rounded border-2 border-[#444] cursor-pointer bg-transparent hover:border-[#4a9eff] transition"
                             />
                             <div className="flex-1">
-                                <div className="text-xs text-[#888] mb-1">Preview</div>
-                                <div className="w-full h-10 rounded border border-[#333]" style={{ backgroundColor: tempColor }} />
+                                <div className="text-xs text-[#888] mb-1">Live Preview</div>
+                                <div className="w-full h-10 rounded-md border border-[#333] shadow-inner" style={{ backgroundColor: tempColor }} />
+                                <div className="text-[10px] text-[#555] mt-1 font-mono">{tempColor}</div>
                             </div>
                         </div>
                         <div className="flex justify-end gap-3">
-                            <button onClick={handleCancelAdd} className="px-3 py-1.5 text-xs font-medium bg-[#252525] border border-[#333] rounded-md hover:bg-[#2a2a2a] text-[#aaa] transition">Cancel</button>
-                            <button onClick={handleConfirmAdd} className="px-3 py-1.5 text-xs font-medium bg-[#4a9eff] border border-[#4a9eff] rounded-md hover:bg-[#3a8eff] text-white transition">Add</button>
+                            <button onClick={handleCancelAdd} className="px-4 py-1.5 text-xs font-medium bg-[#252525] border border-[#333] rounded-md hover:bg-[#2a2a2a] text-[#aaa] transition">Cancel</button>
+                            <button onClick={handleConfirmAdd} className="px-4 py-1.5 text-xs font-medium bg-[#4a9eff] border border-[#4a9eff] rounded-md hover:bg-[#3a8eff] text-white transition">Add Color</button>
                         </div>
                     </div>
                 </div>
@@ -258,24 +260,26 @@ export const Palette: React.FC<PaletteProps> = ({
                     className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 transition-opacity duration-200"
                     onClick={(e) => handleBackdropClick(e, 'edit')}
                 >
-                    <div ref={modalRef} className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-5 shadow-xl w-96 transform transition-all duration-200 scale-100">
-                        <h3 className="text-sm font-semibold text-white mb-4">Edit Color</h3>
-                        <div className="flex items-center gap-4 mb-4">
+                    <div ref={modalRef} className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-6 shadow-xl w-96 transform transition-all duration-200 scale-100">
+                        <h3 className="text-base font-bold text-white mb-2">Edit Existing Color</h3>
+                        <p className="text-xs text-[#888] mb-4">Adjust the color with the picker, then click "Save".</p>
+                        <div className="flex items-center gap-4 mb-5">
                             <input
                                 ref={editColorInputRef}
                                 type="color"
                                 value={tempColor}
                                 onChange={(e) => setTempColor(e.target.value)}
-                                className="w-16 h-16 rounded border border-[#333] cursor-pointer bg-transparent"
+                                className="w-16 h-16 rounded border-2 border-[#444] cursor-pointer bg-transparent hover:border-[#4a9eff] transition"
                             />
                             <div className="flex-1">
-                                <div className="text-xs text-[#888] mb-1">Preview</div>
-                                <div className="w-full h-10 rounded border border-[#333]" style={{ backgroundColor: tempColor }} />
+                                <div className="text-xs text-[#888] mb-1">Live Preview</div>
+                                <div className="w-full h-10 rounded-md border border-[#333] shadow-inner" style={{ backgroundColor: tempColor }} />
+                                <div className="text-[10px] text-[#555] mt-1 font-mono">{tempColor}</div>
                             </div>
                         </div>
                         <div className="flex justify-end gap-3">
-                            <button onClick={handleCancelEdit} className="px-3 py-1.5 text-xs font-medium bg-[#252525] border border-[#333] rounded-md hover:bg-[#2a2a2a] text-[#aaa] transition">Cancel</button>
-                            <button onClick={handleConfirmEdit} className="px-3 py-1.5 text-xs font-medium bg-[#4a9eff] border border-[#4a9eff] rounded-md hover:bg-[#3a8eff] text-white transition">Save</button>
+                            <button onClick={handleCancelEdit} className="px-4 py-1.5 text-xs font-medium bg-[#252525] border border-[#333] rounded-md hover:bg-[#2a2a2a] text-[#aaa] transition">Cancel</button>
+                            <button onClick={handleConfirmEdit} className="px-4 py-1.5 text-xs font-medium bg-[#4a9eff] border border-[#4a9eff] rounded-md hover:bg-[#3a8eff] text-white transition">Save Changes</button>
                         </div>
                     </div>
                 </div>
