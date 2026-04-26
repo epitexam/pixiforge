@@ -125,7 +125,7 @@ export const EditorPage: React.FC = () => {
             </header>
 
             <main className="flex flex-1 overflow-hidden">
-                <aside className="flex-none w-14 bg-[#1a1a1a] border-r border-[#2a2a2a] flex flex-col items-center py-3 gap-1">
+                <aside className="flex-none w-12 sm:w-14 bg-[#1a1a1a] border-r border-[#2a2a2a] flex flex-col items-center py-2 sm:py-3 gap-0.5 sm:gap-1">
                     <Toolbar orientation="vertical" />
                 </aside>
 
@@ -140,7 +140,7 @@ export const EditorPage: React.FC = () => {
                         translateY={translateY}
                         onTranslateYChange={setTranslateY}
                     />
-                    <div className="absolute bottom-3 right-4 text-[10px] text-[#4a4a4a] tracking-[0.2em] uppercase bg-[#0f0f0f]/80 px-2 py-1 rounded-sm backdrop-blur-sm pointer-events-none">
+                    <div className="absolute bottom-2 right-2 sm:bottom-3 sm:right-4 text-[8px] sm:text-[10px] text-[#4a4a4a] tracking-[0.2em] uppercase bg-[#0f0f0f]/80 px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-sm backdrop-blur-sm pointer-events-none">
                         16px · 64×64
                     </div>
                 </section>
@@ -174,11 +174,11 @@ export const EditorPage: React.FC = () => {
                 </aside>
             </main>
 
-            <footer className="flex-none py-3 px-4 bg-[#1a1a1a] border-t border-[#2a2a2a] flex flex-col sm:flex-row items-center gap-3 sm:gap-4 overflow-x-auto">
-                <div className="flex-none w-8 h-8 sm:w-10 sm:h-10 rounded-sm border border-[#444] shadow-[inset_0_2px_4px_rgba(0,0,0,0.5)]"
+            <footer className="flex-none py-2 sm:py-3 px-2 sm:px-4 bg-[#1a1a1a] border-t border-[#2a2a2a] flex flex-col sm:flex-row items-center gap-2 sm:gap-4 overflow-x-auto">
+                <div className="flex-none w-7 h-7 sm:w-10 sm:h-10 rounded-sm border border-[#444] shadow-[inset_0_2px_4px_rgba(0,0,0,0.5)]"
                     style={{ backgroundColor: currentColor }} title={currentColor} />
 
-                <div className="flex-none w-px h-6 bg-[#2a2a2a] hidden sm:block" />
+                <div className="flex-none w-px h-5 bg-[#2a2a2a] hidden sm:block" />
 
                 <div className="flex-1 w-full min-w-0">
                     <Palette
@@ -188,58 +188,58 @@ export const EditorPage: React.FC = () => {
                         onAddColor={addColor}
                         onRemoveColor={removeColor}
                         onUpdateColor={updateColor}
-                        swatchSize={28}
+                        swatchSize={24}
                         showCustomPicker={true}
                     />
                 </div>
 
-                <div className="flex-none w-px h-6 bg-[#2a2a2a] hidden sm:block" />
+                <div className="flex-none w-px h-5 bg-[#2a2a2a] hidden sm:block" />
 
-                <div className="flex items-center gap-2">
-                    <button onClick={exportPalette} className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center bg-[#252525] border border-[#333] rounded-md hover:border-[#4a9eff] hover:text-[#4a9eff] text-[#aaa] transition-all" title="Export palette">
-                        <DownloadIcon className="w-4 h-4" />
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                    <button onClick={exportPalette} className="w-7 h-7 sm:w-9 sm:h-9 flex items-center justify-center bg-[#252525] border border-[#333] rounded-md hover:border-[#4a9eff] hover:text-[#4a9eff] text-[#aaa] transition-all" title="Export palette">
+                        <DownloadIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     </button>
-                    <button onClick={handleImportPalette} className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center bg-[#252525] border border-[#333] rounded-md hover:border-[#4a9eff] hover:text-[#4a9eff] text-[#aaa] transition-all" title="Import palette">
-                        <UploadIcon className="w-4 h-4" />
+                    <button onClick={handleImportPalette} className="w-7 h-7 sm:w-9 sm:h-9 flex items-center justify-center bg-[#252525] border border-[#333] rounded-md hover:border-[#4a9eff] hover:text-[#4a9eff] text-[#aaa] transition-all" title="Import palette">
+                        <UploadIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     </button>
                 </div>
 
-                <div className="flex-none w-px h-6 bg-[#2a2a2a] hidden sm:block" />
+                <div className="flex-none w-px h-5 bg-[#2a2a2a] hidden sm:block" />
 
                 <TileControls />
 
-                <div className="flex-none w-px h-6 bg-[#2a2a2a] hidden sm:block" />
+                <div className="flex-none w-px h-5 bg-[#2a2a2a] hidden sm:block" />
 
-                <div className="flex items-center gap-2">
-                    <button onClick={handleCopy} className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center bg-[#252525] border border-[#333] rounded-md hover:border-[#4a9eff] hover:text-[#4a9eff] text-[#aaa] transition-all" title="Copy selection (Ctrl+C)">
-                        <CopyIcon className="w-4 h-4" />
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                    <button onClick={handleCopy} className="w-7 h-7 sm:w-9 sm:h-9 flex items-center justify-center bg-[#252525] border border-[#333] rounded-md hover:border-[#4a9eff] hover:text-[#4a9eff] text-[#aaa] transition-all" title="Copy selection (Ctrl+C)">
+                        <CopyIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     </button>
-                    <button onClick={handlePaste} className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center bg-[#252525] border border-[#333] rounded-md hover:border-[#4a9eff] hover:text-[#4a9eff] text-[#aaa] transition-all" title="Paste at mouse position (Ctrl+V)">
-                        <PasteIcon className="w-4 h-4" />
+                    <button onClick={handlePaste} className="w-7 h-7 sm:w-9 sm:h-9 flex items-center justify-center bg-[#252525] border border-[#333] rounded-md hover:border-[#4a9eff] hover:text-[#4a9eff] text-[#aaa] transition-all" title="Paste at mouse position (Ctrl+V)">
+                        <PasteIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     </button>
                 </div>
 
-                <div className="flex-none w-px h-6 bg-[#2a2a2a] hidden sm:block" />
+                <div className="flex-none w-px h-5 bg-[#2a2a2a] hidden sm:block" />
 
                 <ZoomControls zoomLevel={scale} onZoomIn={handleZoomIn} onZoomOut={handleZoomOut} onZoomReset={handleZoomReset} />
 
-                <div className="flex-none w-px h-6 bg-[#2a2a2a] hidden sm:block" />
+                <div className="flex-none w-px h-5 bg-[#2a2a2a] hidden sm:block" />
 
-                <div className="flex items-center gap-2">
-                    <button onClick={handleExportPNG} className="flex items-center gap-1 sm:gap-2 px-3 py-1.5 sm:px-4 text-[11px] font-medium tracking-wide text-[#888] hover:text-[#4a9eff] border border-[#333] hover:border-[#4a9eff] rounded-md transition-all bg-[#252525] hover:bg-[#2a2a2a]" title="Export as PNG">
-                        <ImageIcon className="w-4 h-4" />
-                        <span>PNG</span>
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                    <button onClick={handleExportPNG} className="flex items-center gap-1 sm:gap-2 px-2 py-1 sm:px-4 sm:py-1.5 text-[10px] sm:text-[11px] font-medium tracking-wide text-[#888] hover:text-[#4a9eff] border border-[#333] hover:border-[#4a9eff] rounded-md transition-all bg-[#252525] hover:bg-[#2a2a2a]" title="Export as PNG">
+                        <ImageIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                        <span className="hidden sm:inline">PNG</span>
                     </button>
-                    <button onClick={() => setExportWithGrid(!exportWithGrid)} className={`w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-md border transition-all ${exportWithGrid ? 'bg-[#4a9eff] text-white border-[#4a9eff]' : 'bg-[#252525] text-[#888] border-[#333] hover:border-[#4a9eff] hover:text-[#4a9eff]'}`} title={exportWithGrid ? "Export includes grid" : "Export without grid"}>
-                        <GridIcon className="w-4 h-4" />
+                    <button onClick={() => setExportWithGrid(!exportWithGrid)} className={`w-7 h-7 sm:w-9 sm:h-9 flex items-center justify-center rounded-md border transition-all ${exportWithGrid ? 'bg-[#4a9eff] text-white border-[#4a9eff]' : 'bg-[#252525] text-[#888] border-[#333] hover:border-[#4a9eff] hover:text-[#4a9eff]'}`} title={exportWithGrid ? "Export includes grid" : "Export without grid"}>
+                        <GridIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     </button>
                 </div>
 
-                <div className="flex-none w-px h-6 bg-[#2a2a2a] hidden sm:block" />
+                <div className="flex-none w-px h-5 bg-[#2a2a2a] hidden sm:block" />
 
-                <button onClick={handleClearCanvas} className="flex items-center gap-2 px-3 py-1.5 text-[11px] font-medium tracking-wide text-[#888] hover:text-[#cf6679] border border-[#333] hover:border-[#cf6679]/50 rounded-md transition-all bg-[#252525] hover:bg-[#2a2a2a]" title="Clear canvas">
-                    <ClearIcon className="w-4 h-4" />
-                    <span>Clear</span>
+                <button onClick={handleClearCanvas} className="flex items-center gap-1 sm:gap-2 px-2 py-1 sm:px-3 sm:py-1.5 text-[10px] sm:text-[11px] font-medium tracking-wide text-[#888] hover:text-[#cf6679] border border-[#333] hover:border-[#cf6679]/50 rounded-md transition-all bg-[#252525] hover:bg-[#2a2a2a]" title="Clear canvas">
+                    <ClearIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                    <span className="hidden sm:inline">Clear</span>
                 </button>
             </footer>
         </div>
