@@ -15,7 +15,7 @@ export interface PaletteProps {
 }
 
 const CustomColorIcon: React.FC<{ className?: string }> = ({ className }) => (
-    <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg className={className} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="12" cy="12" r="10" />
         <circle cx="12" cy="12" r="3" />
         <path d="M5 5 L8 8" />
@@ -166,10 +166,10 @@ export const Palette: React.FC<PaletteProps> = ({
     };
 
     return (
-        <div className={`flex flex-nowrap items-center gap-3 ${className}`}>
-            <div className="flex overflow-x-auto gap-2 py-2 px-1 rounded-sm" style={{ scrollbarWidth: 'thin', scrollbarColor: '#4a4a4a #2a2a2a' }}>
+        <div className={`flex flex-col gap-3 ${className}`}>
+            <div className="flex flex-wrap gap-2">
                 {colors.map((color, index) => (
-                    <div key={`${color}-${index}`} className="relative group flex-none" style={{ width: swatchSize, height: swatchSize }}>
+                    <div key={`${color}-${index}`} className="relative group" style={{ width: swatchSize, height: swatchSize }}>
                         <button
                             onClick={() => onSelectColor(color)}
                             onDoubleClick={() => handleOpenEditModal(index)}
@@ -192,7 +192,7 @@ export const Palette: React.FC<PaletteProps> = ({
                 {onAddColor && (
                     <button
                         onClick={handleOpenAddModal}
-                        className="flex-none rounded-sm transition-all duration-150 cursor-pointer hover:scale-110 hover:ring-2 hover:ring-[#4a9eff] hover:ring-offset-1 hover:ring-offset-[#1a1a1a] bg-[#252525] border border-[#3a3a3a] flex items-center justify-center text-[#aaa] hover:text-[#4a9eff]"
+                        className="rounded-sm transition-all duration-150 cursor-pointer hover:scale-110 hover:ring-2 hover:ring-[#4a9eff] hover:ring-offset-1 hover:ring-offset-[#1a1a1a] bg-[#252525] border border-[#3a3a3a] flex items-center justify-center text-[#aaa] hover:text-[#4a9eff]"
                         style={{ width: swatchSize, height: swatchSize }}
                         title="Add custom color (Ctrl+Shift+A)"
                         aria-label="Add color"
@@ -203,15 +203,14 @@ export const Palette: React.FC<PaletteProps> = ({
             </div>
 
             {showCustomPicker && (
-                <>
-                    <div className="flex-none w-px h-8 bg-[#2a2a2a]" />
+                <div className="flex items-center gap-2 pt-1 border-t border-[#2a2a2a]">
                     <button
                         onClick={handleCustomButtonClick}
-                        className="flex-none w-9 h-9 rounded-md bg-[#252525] border border-[#3a3a3a] hover:border-[#4a9eff] hover:bg-[#2a2a2a] hover:text-[#4a9eff] transition-all duration-150 flex items-center justify-center text-[#aaa]"
+                        className="w-8 h-8 rounded-md bg-[#252525] border border-[#3a3a3a] hover:border-[#4a9eff] hover:bg-[#2a2a2a] hover:text-[#4a9eff] transition-all duration-150 flex items-center justify-center text-[#aaa]"
                         title="Choose custom color"
                         aria-label="Custom color"
                     >
-                        <CustomColorIcon className="w-5 h-5" />
+                        <CustomColorIcon className="w-4 h-4" />
                     </button>
                     <input
                         ref={colorInputRef}
@@ -222,9 +221,10 @@ export const Palette: React.FC<PaletteProps> = ({
                         tabIndex={-1}
                         aria-hidden="true"
                     />
-                </>
+                </div>
             )}
 
+            {/* Modales inchangées */}
             {showAddModal && (
                 <div
                     className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 transition-opacity duration-200"
