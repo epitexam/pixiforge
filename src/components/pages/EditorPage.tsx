@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { Toaster, toast } from 'sonner';
 import { useToolStore } from '../../stores/toolStore';
 import { MenuBar } from '../organisms/MenuBar';
@@ -11,104 +11,32 @@ import { useCanvasStore } from '../../stores/canvaStore';
 import { CanvasHandle } from '../organisms/canvas/types';
 import { TileControls } from '../molecules/TileControls';
 import { usePaletteStore } from '../../stores/paletteStore';
+import { useZoom, useExport, useClipboard, usePaletteActions } from '../../hooks';
 
 export const EditorPage: React.FC = () => {
     const { clearCanvas } = useCanvasStore();
     const { currentColor, setCurrentColor } = useToolStore();
     const {
         colors: paletteColors,
-        exportPalette,
-        importPalette,
         addColor,
         removeColor,
         updateColor
     } = usePaletteStore();
 
-    const [scale, setScale] = useState(1);
-    const [translateX, setTranslateX] = useState(0);
-    const [translateY, setTranslateY] = useState(0);
+    const canvasRef = useRef<CanvasHandle>(null);
     const [exportWithGrid, setExportWithGrid] = useState(true);
 
-    const canvasRef = useRef<CanvasHandle>(null);
-
-    const handleZoomIn = () => {
-        setScale(prev => Math.min(prev * 1.2, 5));
-    };
-
-    const handleZoomOut = () => {
-        setScale(prev => Math.max(prev * 0.8, 0.2));
-    };
-
-    const handleZoomReset = () => {
-        setScale(1);
-        setTranslateX(0);
-        setTranslateY(0);
-    };
-
-    const handleCopy = () => {
-        canvasRef.current?.copySelection();
-        toast.success('Selection copied');
-    };
-
-    const handlePaste = () => {
-        canvasRef.current?.pasteAtMouse();
-        toast.success('Selection pasted');
-    };
+    const { scale, translateX, translateY, setScale, setTranslateX, setTranslateY, handleZoomIn, handleZoomOut, handleZoomReset } = useZoom();
+    const { exportWithGrid: exportGrid, exportWithoutGrid } = useExport(canvasRef);
+    const { handleCopy, handlePaste } = useClipboard(canvasRef);
+    const { exportPalette, handleImportPalette } = usePaletteActions();
 
     const handleExportPNG = () => {
         if (exportWithGrid) {
-            const canvas = canvasRef.current?.getCanvas();
-            if (!canvas) {
-                toast.error('Canvas not available');
-                return;
-            }
-            const link = document.createElement('a');
-            link.download = 'pixiforge.png';
-            link.href = canvas.toDataURL('image/png');
-            link.click();
-            toast.success('PNG exported with grid');
+            exportGrid();
         } else {
-            const { width, height, pixels: pixels1D } = useCanvasStore.getState();
-            const cellSize = 16;
-            const offscreen = document.createElement('canvas');
-            offscreen.width = width * cellSize;
-            offscreen.height = height * cellSize;
-            const ctx = offscreen.getContext('2d');
-            if (!ctx) {
-                toast.error('Failed to create export canvas');
-                return;
-            }
-            for (let y = 0; y < height; y++) {
-                for (let x = 0; x < width; x++) {
-                    const index = y * width + x;
-                    const color = pixels1D[index] ?? '#F0F0F0';
-                    ctx.fillStyle = color;
-                    ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
-                }
-            }
-            const link = document.createElement('a');
-            link.download = 'pixiforge_nogrid.png';
-            link.href = offscreen.toDataURL('image/png');
-            link.click();
-            toast.success('PNG exported without grid');
+            exportWithoutGrid();
         }
-    };
-
-    const handleImportPalette = () => {
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = '.json';
-        input.onchange = async (e) => {
-            const file = (e.target as HTMLInputElement).files?.[0];
-            if (!file) return;
-            try {
-                await importPalette(file);
-                toast.success('Palette imported successfully');
-            } catch (err) {
-                toast.error('Invalid palette file');
-            }
-        };
-        input.click();
     };
 
     const handleClearCanvas = () => {
@@ -147,9 +75,7 @@ export const EditorPage: React.FC = () => {
 
                 <aside className="hidden lg:flex lg:flex-col lg:w-56 bg-[#1a1a1a] border-l border-[#2a2a2a]">
                     <div className="px-4 py-3 border-b border-[#2a2a2a]">
-                        <span className="text-[10px] font-semibold tracking-[0.2em] text-[#666] uppercase">
-                            Layers
-                        </span>
+                        <span className="text-[10px] font-semibold tracking-[0.2em] text-[#666] uppercase">Layers</span>
                     </div>
                     <div className="m-2 p-2 rounded-sm bg-[#252525] border border-[#333] flex items-center gap-2 cursor-pointer hover:border-[#4a9eff] transition-colors group">
                         <div className="w-4 h-4 rounded-sm bg-[#3a3a3a] flex-none" />
@@ -158,25 +84,17 @@ export const EditorPage: React.FC = () => {
                     </div>
                     <div className="flex-1" />
                     <div className="px-4 py-4 border-t border-[#2a2a2a]">
-                        <span className="text-[9px] font-semibold tracking-[0.2em] text-[#666] uppercase">
-                            Active Color
-                        </span>
+                        <span className="text-[9px] font-semibold tracking-[0.2em] text-[#666] uppercase">Active Color</span>
                         <div className="mt-3 flex items-center gap-3">
-                            <div
-                                className="w-10 h-10 rounded-sm border border-[#444] shadow-[inset_0_2px_4px_rgba(0,0,0,0.5)]"
-                                style={{ backgroundColor: currentColor }}
-                            />
-                            <span className="text-[11px] text-[#888] font-mono uppercase tracking-wider">
-                                {currentColor}
-                            </span>
+                            <div className="w-10 h-10 rounded-sm border border-[#444] shadow-[inset_0_2px_4px_rgba(0,0,0,0.5)]" style={{ backgroundColor: currentColor }} />
+                            <span className="text-[11px] text-[#888] font-mono uppercase tracking-wider">{currentColor}</span>
                         </div>
                     </div>
                 </aside>
             </main>
 
             <footer className="flex-none py-2 sm:py-3 px-2 sm:px-4 bg-[#1a1a1a] border-t border-[#2a2a2a] flex flex-col sm:flex-row items-center gap-2 sm:gap-4 overflow-x-auto">
-                <div className="flex-none w-7 h-7 sm:w-10 sm:h-10 rounded-sm border border-[#444] shadow-[inset_0_2px_4px_rgba(0,0,0,0.5)]"
-                    style={{ backgroundColor: currentColor }} title={currentColor} />
+                <div className="flex-none w-7 h-7 sm:w-10 sm:h-10 rounded-sm border border-[#444] shadow-[inset_0_2px_4px_rgba(0,0,0,0.5)]" style={{ backgroundColor: currentColor }} title={currentColor} />
 
                 <div className="flex-none w-px h-5 bg-[#2a2a2a] hidden sm:block" />
 
