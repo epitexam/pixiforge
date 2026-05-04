@@ -114,11 +114,9 @@ export const EditorPage: React.FC = () => {
             </header>
 
             <main className="flex flex-1 overflow-hidden">
-
                 <aside className="flex-none w-14 bg-[#1a1a1a] border-r border-[#2a2a2a] flex flex-col items-center py-3 gap-1">
                     <Toolbar orientation="vertical" />
                 </aside>
-
 
                 <aside className="hidden lg:flex lg:flex-col lg:w-40 bg-[#1a1a1a] border-r border-[#2a2a2a] overflow-y-auto">
                     <div className="px-2 py-2 border-b border-[#2a2a2a]">
@@ -132,7 +130,6 @@ export const EditorPage: React.FC = () => {
                         </div>
                     </div>
                 </aside>
-
 
                 <div className="flex flex-col flex-1 overflow-hidden">
                     <section className="flex-1 flex items-center justify-center bg-[#0f0f0f] overflow-hidden relative">
@@ -180,50 +177,50 @@ export const EditorPage: React.FC = () => {
                     </footer>
                 </div>
 
+                <aside className="hidden lg:flex lg:flex-col lg:w-64 bg-[#1a1a1a] border-l border-[#2a2a2a] overflow-y-auto">
+                    <div className="flex-1 flex flex-col p-3 gap-8">
 
-                <aside className="hidden lg:flex lg:flex-col lg:w-64 bg-[#1a1a1a] border-l border-[#2a2a2a] overflow-y-auto p-3 gap-4">
+                        <div className="flex flex-col gap-2">
+                            <span className="text-[10px] font-semibold tracking-[0.2em] text-[#666] uppercase">Palette</span>
+                            <Palette
+                                colors={paletteColors}
+                                selectedColor={currentColor}
+                                onSelectColor={setCurrentColor}
+                                onAddColor={addColor}
+                                onRemoveColor={removeColor}
+                                onUpdateColor={updateColor}
+                                swatchSize={32}
+                                showCustomPicker={true}
+                            />
+                            <div className="flex gap-2 mt-1">
+                                <button onClick={exportPalette} className="flex-1 px-2 py-1 text-[10px] bg-[#252525] border border-[#333] rounded-md hover:border-[#4a9eff] hover:text-[#4a9eff] text-[#aaa] transition-all">
+                                    <DownloadIcon className="w-3 h-3 inline mr-1" />
+                                    Export
+                                </button>
+                                <button onClick={handleImportPalette} className="flex-1 px-2 py-1 text-[10px] bg-[#252525] border border-[#333] rounded-md hover:border-[#4a9eff] hover:text-[#4a9eff] text-[#aaa] transition-all">
+                                    <UploadIcon className="w-3 h-3 inline mr-1" />
+                                    Import
+                                </button>
+                            </div>
+                        </div>
 
-                    <div className="flex flex-col gap-2">
-                        <span className="text-[10px] font-semibold tracking-[0.2em] text-[#666] uppercase">Palette</span>
-                        <Palette
-                            colors={paletteColors}
-                            selectedColor={currentColor}
-                            onSelectColor={setCurrentColor}
-                            onAddColor={addColor}
-                            onRemoveColor={removeColor}
-                            onUpdateColor={updateColor}
-                            swatchSize={32}
-                            showCustomPicker={true}
-                        />
-                        <div className="flex gap-2 mt-1">
-                            <button onClick={exportPalette} className="flex-1 px-2 py-1 text-[10px] bg-[#252525] border border-[#333] rounded-md hover:border-[#4a9eff] hover:text-[#4a9eff] text-[#aaa] transition-all">
-                                <DownloadIcon className="w-3 h-3 inline mr-1" />
-                                Export
-                            </button>
-                            <button onClick={handleImportPalette} className="flex-1 px-2 py-1 text-[10px] bg-[#252525] border border-[#333] rounded-md hover:border-[#4a9eff] hover:text-[#4a9eff] text-[#aaa] transition-all">
-                                <UploadIcon className="w-3 h-3 inline mr-1" />
-                                Import
-                            </button>
+
+                        <div className="w-full h-px bg-[#2a2a2a]" />
+
+
+                        <div className="flex flex-col gap-2">
+                            <span className="text-[10px] font-semibold tracking-[0.2em] text-[#666] uppercase">Tiles</span>
+                            <TileControls />
                         </div>
                     </div>
 
-
-                    <div className="w-full h-px bg-[#2a2a2a]" />
-
-                    <div className="flex flex-col gap-2">
-                        <span className="text-[10px] font-semibold tracking-[0.2em] text-[#666] uppercase">Tiles</span>
-                        <TileControls />
-                    </div>
-
-
-                    <div className="w-full h-px bg-[#2a2a2a]" />
-
-
-                    <div className="flex flex-col gap-2">
-                        <span className="text-[10px] font-semibold tracking-[0.2em] text-[#666] uppercase">Active Color</span>
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-sm border border-[#444] shadow-[inset_0_2px_4px_rgba(0,0,0,0.5)]" style={{ backgroundColor: currentColor }} />
-                            <span className="text-[11px] text-[#888] font-mono uppercase tracking-wider">{currentColor}</span>
+                    <div className="mt-auto p-3 border-t border-[#2a2a2a]">
+                        <div className="flex flex-col gap-2">
+                            <span className="text-[10px] font-semibold tracking-[0.2em] text-[#666] uppercase">Active Color</span>
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-sm border border-[#444] shadow-[inset_0_2px_4px_rgba(0,0,0,0.5)]" style={{ backgroundColor: currentColor }} />
+                                <span className="text-[11px] text-[#888] font-mono uppercase tracking-wider">{currentColor}</span>
+                            </div>
                         </div>
                     </div>
                 </aside>

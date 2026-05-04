@@ -1,10 +1,11 @@
-// src/stores/paletteStore.ts
 import { create } from 'zustand';
+import { invoke } from '@tauri-apps/api/core';
+import { toast } from 'sonner';
 
 interface PaletteStore {
     colors: string[];
     setColors: (colors: string[]) => void;
-    exportPalette: () => void;
+    exportPalette: () => Promise<void>;
     importPalette: (file: File) => Promise<void>;
     addColor: (color: string) => void;
     removeColor: (index: number) => void;
@@ -26,19 +27,20 @@ export const usePaletteStore = create<PaletteStore>((set, get) => ({
 
     setColors: (colors) => set({ colors }),
 
-    exportPalette: () => {
+    exportPalette: async () => {
         const { colors } = get();
         const data = { name: 'Exported Palette', colors, version: '1.0' };
         const json = JSON.stringify(data, null, 2);
-        const blob = new Blob([json], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `palette_${Date.now()}.json`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        try {
+            const savedPath = await invoke<string>('save_file', {
+                content: json,
+                defaultPath: 'palette.json',
+            });
+            toast.success(`Palette exported to ${savedPath}`);
+        } catch (error) {
+            console.error('Export palette failed:', error);
+            toast.error('Failed to export palette');
+        }
     },
 
     importPalette: async (file) => {
@@ -59,12 +61,17 @@ export const usePaletteStore = create<PaletteStore>((set, get) => ({
                     const validColors = newColors.filter(c => isValidHex(c));
                     if (validColors.length === 0) throw new Error('No valid colors found');
                     set({ colors: validColors });
+                    toast.success('Palette imported successfully');
                     resolve();
                 } catch (err) {
+                    toast.error('Invalid palette file');
                     reject(err);
                 }
             };
-            reader.onerror = () => reject(new Error('Failed to read file'));
+            reader.onerror = () => {
+                toast.error('Failed to read file');
+                reject(new Error('Failed to read file'));
+            };
             reader.readAsText(file);
         });
     },

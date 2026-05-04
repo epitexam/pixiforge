@@ -166,44 +166,48 @@ export const Palette: React.FC<PaletteProps> = ({
     };
 
     return (
-        <div className={`flex flex-col gap-3 ${className}`}>
-            <div className="flex flex-wrap gap-2">
-                {colors.map((color, index) => (
-                    <div key={`${color}-${index}`} className="relative group" style={{ width: swatchSize, height: swatchSize }}>
-                        <button
-                            onClick={() => onSelectColor(color)}
-                            onDoubleClick={() => handleOpenEditModal(index)}
-                            className={`w-full h-full rounded-sm transition-all duration-150 cursor-pointer hover:scale-110 hover:ring-2 hover:ring-[#4a9eff] hover:ring-offset-1 hover:ring-offset-[#1a1a1a] ${color === selectedColor ? 'ring-2 ring-[#4a9eff] ring-offset-2 ring-offset-[#1a1a1a] scale-105' : 'ring-1 ring-[#3a3a3a] hover:ring-[#4a9eff]'}`}
-                            style={{ backgroundColor: color }}
-                            aria-label={`Select color ${color}`}
-                            title={color}
-                        />
-                        {onRemoveColor && colors.length > 1 && (
+        <div className={`flex flex-col gap-3 w-full ${className}`}>
+            <div className="max-h-48 overflow-y-auto" style={{ scrollbarWidth: 'thin' }}>
+                <div className="flex flex-wrap gap-2 justify-start">
+                    {colors.map((color, index) => (
+                        <div key={`${color}-${index}`} className="relative group" style={{ width: swatchSize, height: swatchSize }}>
                             <button
-                                onClick={(e) => handleRemoveColor(index, e)}
-                                className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
-                                aria-label="Remove color"
-                            >
-                                <CloseIcon className="w-2.5 h-2.5" />
-                            </button>
-                        )}
-                    </div>
-                ))}
-                {onAddColor && (
-                    <button
-                        onClick={handleOpenAddModal}
-                        className="rounded-sm transition-all duration-150 cursor-pointer hover:scale-110 hover:ring-2 hover:ring-[#4a9eff] hover:ring-offset-1 hover:ring-offset-[#1a1a1a] bg-[#252525] border border-[#3a3a3a] flex items-center justify-center text-[#aaa] hover:text-[#4a9eff]"
-                        style={{ width: swatchSize, height: swatchSize }}
-                        title="Add custom color (Ctrl+Shift+A)"
-                        aria-label="Add color"
-                    >
-                        <PlusIcon className="w-5 h-5" />
-                    </button>
-                )}
+                                onClick={() => onSelectColor(color)}
+                                onDoubleClick={() => handleOpenEditModal(index)}
+                                className={`w-full h-full rounded-sm transition-all duration-150 cursor-pointer hover:scale-110 hover:ring-2 hover:ring-[#4a9eff] hover:ring-offset-1 hover:ring-offset-[#1a1a1a] ${color === selectedColor ? 'ring-2 ring-[#4a9eff] ring-offset-2 ring-offset-[#1a1a1a] scale-105' : 'ring-1 ring-[#3a3a3a] hover:ring-[#4a9eff]'}`}
+                                style={{ backgroundColor: color }}
+                                aria-label={`Select color ${color}`}
+                                title={`${color} (double-click to edit, right-click to delete)`}
+                            />
+                            {onRemoveColor && colors.length > 1 && (
+                                <button
+                                    onClick={(e) => handleRemoveColor(index, e)}
+                                    className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                                    aria-label="Remove color"
+                                >
+                                    <CloseIcon className="w-2.5 h-2.5" />
+                                </button>
+                            )}
+                        </div>
+                    ))}
+                </div>
             </div>
 
+            {onAddColor && (
+                <button
+                    onClick={handleOpenAddModal}
+                    className="w-full rounded-sm transition-all duration-150 cursor-pointer hover:bg-[#2a2a2a] bg-[#252525] border border-[#3a3a3a] flex items-center justify-center gap-2 py-2 text-[#aaa] hover:text-[#4a9eff]"
+                    title="Add custom color (Ctrl+Shift+A)"
+                    aria-label="Add color"
+                >
+                    <PlusIcon className="w-4 h-4" />
+                    <span className="text-xs">Add Color</span>
+                </button>
+            )}
+
             {showCustomPicker && (
-                <div className="flex items-center gap-2 pt-1 border-t border-[#2a2a2a]">
+                <div className="flex items-center justify-between gap-2 pt-2 border-t border-[#2a2a2a]">
+                    <span className="text-[9px] text-[#666] uppercase tracking-wider">Custom</span>
                     <button
                         onClick={handleCustomButtonClick}
                         className="w-8 h-8 rounded-md bg-[#252525] border border-[#3a3a3a] hover:border-[#4a9eff] hover:bg-[#2a2a2a] hover:text-[#4a9eff] transition-all duration-150 flex items-center justify-center text-[#aaa]"
@@ -224,13 +228,12 @@ export const Palette: React.FC<PaletteProps> = ({
                 </div>
             )}
 
-            {/* Modales inchangées */}
             {showAddModal && (
                 <div
-                    className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 transition-opacity duration-200"
+                    className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50"
                     onClick={(e) => handleBackdropClick(e, 'add')}
                 >
-                    <div ref={modalRef} className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-6 shadow-xl w-96 transform transition-all duration-200 scale-100">
+                    <div ref={modalRef} className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-6 shadow-xl w-96">
                         <h3 className="text-base font-bold text-white mb-2">Add a New Color</h3>
                         <p className="text-xs text-[#888] mb-4">Use the picker below to select a color, then click "Add".</p>
                         <div className="flex items-center gap-4 mb-5">
@@ -257,10 +260,10 @@ export const Palette: React.FC<PaletteProps> = ({
 
             {showEditModal && (
                 <div
-                    className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 transition-opacity duration-200"
+                    className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50"
                     onClick={(e) => handleBackdropClick(e, 'edit')}
                 >
-                    <div ref={modalRef} className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-6 shadow-xl w-96 transform transition-all duration-200 scale-100">
+                    <div ref={modalRef} className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-6 shadow-xl w-96">
                         <h3 className="text-base font-bold text-white mb-2">Edit Existing Color</h3>
                         <p className="text-xs text-[#888] mb-4">Adjust the color with the picker, then click "Save".</p>
                         <div className="flex items-center gap-4 mb-5">
