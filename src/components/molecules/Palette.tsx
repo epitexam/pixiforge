@@ -123,7 +123,7 @@ export const Palette: React.FC<PaletteProps> = ({
     return (
         <div className={`flex flex-col gap-3 w-full ${className}`}>
             <div
-                className="max-h-48 overflow-y-auto p-2"
+                className="max-h-[min(48rem, 120vh)] overflow-y-auto p-2"
                 style={{ scrollbarWidth: 'thin' }}
             >
                 <div className="flex flex-wrap gap-2 justify-center items-center">
