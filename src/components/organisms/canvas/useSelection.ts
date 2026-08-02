@@ -4,12 +4,20 @@ import { DEFAULT_COLOR } from "../../../stores/canvaStore";
 import { Rect } from "./types";
 import { toast } from "sonner";
 
+interface UseSelectionDeps {
+  mousePosRef: React.MutableRefObject<{ clientX: number; clientY: number } | null>;
+  getPixelIndex: (clientX: number, clientY: number) => { x: number; y: number } | null;
+}
+
 export const useSelection = (
   pixels: Color[],
   effectiveWidth: number,
   effectiveHeight: number,
   setPixel: (x: number, y: number, color: Color) => void,
+  deps: UseSelectionDeps
 ) => {
+  const { mousePosRef, getPixelIndex } = deps;
+
   const [selectionRect, setSelectionRect] = useState<Rect | null>(null);
   const [copiedPixels, setCopiedPixels] = useState<Color[][] | null>(null);
 
@@ -19,7 +27,7 @@ export const useSelection = (
       const { x: sx, y: sy, width, height } = selectionRect;
       return x >= sx && x < sx + width && y >= sy && y < sy + height;
     },
-    [selectionRect],
+    [selectionRect]
   );
 
   const copySelection = useCallback(() => {
@@ -69,30 +77,26 @@ export const useSelection = (
       }
       toast.success(`Pasted at (${pasteX}, ${pasteY})`);
     },
-    [copiedPixels, setPixel, effectiveWidth, effectiveHeight],
+    [copiedPixels, setPixel, effectiveWidth, effectiveHeight]
   );
 
-  const pasteAtMouse = useCallback(
-    (
-      mousePos: { clientX: number; clientY: number } | null,
-      getPixelIndex: (
-        clientX: number,
-        clientY: number,
-      ) => { x: number; y: number } | null,
-    ) => {
-      if (mousePos) {
-        const indices = getPixelIndex(mousePos.clientX, mousePos.clientY);
-        if (indices) {
-          pasteSelection(indices.x, indices.y);
-        }
-      } else {
-        toast.error("Paste failed", {
-          description: "No mouse position available"
-        });
-      }
-    },
-    [pasteSelection],
-  );
+  const pasteAtMouse = useCallback(() => {
+    const mousePos = mousePosRef.current;
+    if (!mousePos) {
+      toast.error("Paste failed", {
+        description: "No mouse position available"
+      });
+      return;
+    }
+    const indices = getPixelIndex(mousePos.clientX, mousePos.clientY);
+    if (indices) {
+      pasteSelection(indices.x, indices.y);
+    } else {
+      toast.error("Paste failed", {
+        description: "Mouse is outside the canvas"
+      });
+    }
+  }, [mousePosRef, getPixelIndex, pasteSelection]);
 
   return {
     selectionRect,

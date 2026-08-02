@@ -112,7 +112,16 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(
       copySelection,
       pasteSelection,
       pasteAtMouse,
-    } = useSelection(pixels, effectiveWidth, effectiveHeight, setPixel);
+    } = useSelection(
+      pixels,
+      effectiveWidth,
+      effectiveHeight,
+      setPixel,
+      {
+        mousePosRef: lastMousePosRef,
+        getPixelIndex,
+      }
+    );
 
     useKeyboardSelectionClear({
       selectionRect,
@@ -190,11 +199,10 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(
       currentTranslateY: translateY,
     });
 
-    const pasteAtMouseHandler = useCallback(() => {
-      pasteAtMouse(lastMousePosRef.current, getPixelIndex);
-    }, [pasteAtMouse, getPixelIndex]);
-
-    useKeyboardShortcuts({ copySelection, pasteAtMouse: pasteAtMouseHandler });
+    useKeyboardShortcuts({
+      copySelection,
+      pasteAtMouse,
+    });
 
     usePreventContextMenu(containerRef);
 
@@ -203,11 +211,11 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(
       () => ({
         copySelection,
         pasteSelection,
-        pasteAtMouse: pasteAtMouseHandler,
+        pasteAtMouse,
         hasSelection: () => !!selectionRect,
         getCanvas: () => canvasRef.current,
       }),
-      [copySelection, pasteSelection, pasteAtMouseHandler, selectionRect],
+      [copySelection, pasteSelection, pasteAtMouse, selectionRect],
     );
 
     const activeRect = useMemo(() => {

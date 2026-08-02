@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, RefObject } from "react";
+import { useState, useEffect, useCallback, RefObject, useRef } from "react";
 import { MIN_SCALE, MAX_SCALE, ZOOM_FACTOR } from "./constants";
 
 interface UseZoomPanProps {
@@ -25,21 +25,39 @@ export const useZoomPan = ({
   const [internalTranslateY, setInternalTranslateY] = useState(0);
 
   const scale = onScaleChange !== undefined ? externalScale : internalScale;
-  const translateX =
-    onTranslateXChange !== undefined ? externalTranslateX : internalTranslateX;
-  const translateY =
-    onTranslateYChange !== undefined ? externalTranslateY : internalTranslateY;
+  const translateX = onTranslateXChange !== undefined ? externalTranslateX : internalTranslateX;
+  const translateY = onTranslateYChange !== undefined ? externalTranslateY : internalTranslateY;
 
   const setScale = onScaleChange || setInternalScale;
   const setTranslateX = onTranslateXChange || setInternalTranslateX;
   const setTranslateY = onTranslateYChange || setInternalTranslateY;
 
-  const handleZoom = useCallback((deltaY: number, mouseX: number, mouseY: number) => {
-    const zoomFactor = deltaY > 0 ? ZOOM_FACTOR : 1 / ZOOM_FACTOR;
-    const newScale = Math.min(Math.max(scale * zoomFactor, MIN_SCALE), MAX_SCALE);
+  const scaleRef = useRef(scale);
+  const translateXRef = useRef(translateX);
+  const translateYRef = useRef(translateY);
 
-    const canvasXUnderMouse = (mouseX - translateX) / scale;
-    const canvasYUnderMouse = (mouseY - translateY) / scale;
+  useEffect(() => {
+    scaleRef.current = scale;
+  }, [scale]);
+
+  useEffect(() => {
+    translateXRef.current = translateX;
+  }, [translateX]);
+
+  useEffect(() => {
+    translateYRef.current = translateY;
+  }, [translateY]);
+
+  const handleZoom = useCallback((deltaY: number, mouseX: number, mouseY: number) => {
+    const currentScale = scaleRef.current;
+    const currentTranslateX = translateXRef.current;
+    const currentTranslateY = translateYRef.current;
+
+    const zoomFactor = deltaY > 0 ? ZOOM_FACTOR : 1 / ZOOM_FACTOR;
+    const newScale = Math.min(Math.max(currentScale * zoomFactor, MIN_SCALE), MAX_SCALE);
+
+    const canvasXUnderMouse = (mouseX - currentTranslateX) / currentScale;
+    const canvasYUnderMouse = (mouseY - currentTranslateY) / currentScale;
 
     const newTranslateX = mouseX - newScale * canvasXUnderMouse;
     const newTranslateY = mouseY - newScale * canvasYUnderMouse;
@@ -47,7 +65,7 @@ export const useZoomPan = ({
     setScale(newScale);
     setTranslateX(newTranslateX);
     setTranslateY(newTranslateY);
-  }, [scale, translateX, translateY, setScale, setTranslateX, setTranslateY]);
+  }, [setScale, setTranslateX, setTranslateY]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -64,7 +82,7 @@ export const useZoomPan = ({
 
     container.addEventListener("wheel", wheelHandler, { passive: false });
     return () => container.removeEventListener("wheel", wheelHandler);
-  }, [handleZoom, containerRef]);
+  }, [containerRef, handleZoom]);
 
   return {
     scale,
