@@ -18,6 +18,9 @@ export const useKeyboardSelectionClear = ({
 }: UseKeyboardSelectionClearProps) => {
     useEffect(() => {
         const handleKeyDown = (e: globalThis.KeyboardEvent) => {
+            const target = e.target as HTMLElement;
+            if (target.closest('input, textarea, [contenteditable]')) return;
+
             if (e.key === 'Escape') {
                 if (selectionRect) {
                     e.preventDefault();

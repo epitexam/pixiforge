@@ -18,6 +18,8 @@ import { useKeyboardShortcuts } from "./canvas/useKeyboardShortcuts";
 import { usePreventContextMenu } from "./canvas/usePreventContextMenu";
 import { SelectionOverlay } from "./canvas/SelectionOverlay";
 import { useKeyboardSelectionClear } from "./canvas/useKeyboardSelectionClear";
+import { useTileMode } from "./canvas/useTileMode";
+import { toast } from "sonner";
 
 export interface CanvasProps {
   width?: number;
@@ -105,6 +107,17 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(
       [getPixelIndexFromEvent],
     );
 
+    const { isInsideTile, checkTileBounds, handleMouseMoveTile, setIsInsideTile } =
+      useTileMode({
+        tileModeEnabled,
+        selectedTile,
+        tileWidth,
+        tileHeight,
+        effectiveWidth,
+        effectiveHeight,
+        getPixelIndex,
+      });
+
     const {
       selectionRect,
       setSelectionRect,
@@ -147,11 +160,11 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(
     const handlePixelAction = useCallback(
       (x: number, y: number) => {
         if (tileModeEnabled && selectedTile) {
-          const startX = selectedTile.col * tileWidth;
-          const startY = selectedTile.row * tileHeight;
-          const endX = Math.min(startX + tileWidth, effectiveWidth);
-          const endY = Math.min(startY + tileHeight, effectiveHeight);
-          if (x < startX || x >= endX || y < startY || y >= endY) {
+          const inside = checkTileBounds(x, y);
+          if (!inside) {
+            toast.warning("You can only draw inside the selected tile", {
+              duration: 1500,
+            });
             return;
           }
         }
@@ -172,7 +185,7 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(
             break;
         }
       },
-      [activeTool, currentColor, setPixel, getPixel, setCurrentColor, tileModeEnabled, selectedTile, tileWidth, tileHeight, effectiveWidth, effectiveHeight],
+      [activeTool, currentColor, setPixel, getPixel, setCurrentColor, tileModeEnabled, selectedTile, checkTileBounds],
     );
 
     const {
@@ -198,6 +211,14 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(
       currentTranslateX: translateX,
       currentTranslateY: translateY,
     });
+
+    const handleMouseMoveWrapper = useCallback(
+      (e: React.MouseEvent) => {
+        handleMouseMove(e);
+        handleMouseMoveTile(e.clientX, e.clientY);
+      },
+      [handleMouseMove, handleMouseMoveTile],
+    );
 
     useKeyboardShortcuts({
       copySelection,
@@ -259,16 +280,17 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(
             width: w,
             height: h,
             border: "2px solid cyan",
-            backgroundColor: "rgba(0, 255, 255, 0.15)",
+            backgroundColor: isInsideTile ? "rgba(0, 255, 255, 0.15)" : "rgba(255, 0, 0, 0.1)",
             pointerEvents: "none",
             zIndex: 10,
           }}
         />
       );
-    }, [tileModeEnabled, selectedTile, tileWidth, tileHeight, effectiveWidth, effectiveHeight, cellSize, scale, translateX, translateY]);
+    }, [tileModeEnabled, selectedTile, tileWidth, tileHeight, effectiveWidth, effectiveHeight, cellSize, scale, translateX, translateY, isInsideTile]);
 
     const getCursor = () => {
       if (isPanning) return "grabbing";
+      if (tileModeEnabled && selectedTile && !isInsideTile) return "not-allowed";
       switch (activeTool) {
         case "select":
           return "crosshair";
@@ -310,7 +332,7 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(
           cursor: getCursor(),
         }}
         onMouseDown={customHandleMouseDown}
-        onMouseMove={handleMouseMove}
+        onMouseMove={handleMouseMoveWrapper}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseLeave}
       >

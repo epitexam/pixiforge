@@ -11,6 +11,9 @@ export const useKeyboardShortcuts = ({
 }: UseKeyboardShortcutsProps) => {
   useEffect(() => {
     const handleKeyDown = (e: globalThis.KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.closest('input, textarea, [contenteditable]')) return;
+
       if (e.ctrlKey || e.metaKey) {
         if (e.key === "c") {
           e.preventDefault();
