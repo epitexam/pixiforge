@@ -45,11 +45,11 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                     e.preventDefault();
                     setActiveTool('select');
                     break;
-                default:
-                    break;
                 case 't':
                     e.preventDefault();
                     setActiveTool('tileSelect');
+                    break;
+                default:
                     break;
             }
         };
@@ -63,7 +63,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
             className={`flex ${isVertical ? 'flex-col' : 'flex-row flex-wrap'} gap-1 ${className}`}
         >
             {isVertical && (
-                <span className="text-[8px] tracking-[0.2em] text-[#333] uppercase text-center mb-1">
+                <span className="text-[8px] tracking-[0.2em] text-[#444] uppercase text-center mb-2">
                     Tools
                 </span>
             )}
@@ -79,7 +79,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                         aria-pressed={isActive}
                         className={`
                             group relative flex items-center justify-center
-                            ${isVertical ? 'w-10 h-10' : 'w-10 h-10'}
+                            w-11 h-11
                             rounded-sm transition-all duration-100 cursor-pointer
                             ${isActive
                                 ? 'bg-[#4a9eff]/15 text-[#4a9eff] ring-1 ring-[#4a9eff]/50'
@@ -105,7 +105,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                 );
             })}
 
-            {isVertical && <div className="w-6 h-px bg-[#252525] mx-auto my-1" />}
+            {isVertical && <div className="w-8 h-px bg-[#252525] mx-auto my-2" />}
         </div>
     );
 };

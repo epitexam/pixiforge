@@ -16,7 +16,6 @@ export interface PaletteProps {
     showCustomPicker?: boolean;
 }
 
-
 export const Palette: React.FC<PaletteProps> = ({
     colors,
     selectedColor,
@@ -25,7 +24,7 @@ export const Palette: React.FC<PaletteProps> = ({
     onRemoveColor,
     onUpdateColor,
     className = '',
-    swatchSize = 28,
+    swatchSize = 32,
     showCustomPicker = true,
 }) => {
     const colorInputRef = useRef<HTMLInputElement>(null);
@@ -145,7 +144,7 @@ export const Palette: React.FC<PaletteProps> = ({
                                     w-full h-full rounded-sm transition-all duration-150
                                     cursor-pointer hover:scale-110
                                     hover:ring-2 hover:ring-[#4a9eff]
-                                    hover:ring-offset-1 hover:ring-offset-[#1a1a1a]
+                                    hover:ring-offset-2 hover:ring-offset-[#1a1a1a]
                                     ${color === selectedColor
                                         ? 'ring-2 ring-[#4a9eff] ring-offset-2 ring-offset-[#1a1a1a] scale-105'
                                         : 'ring-1 ring-[#3a3a3a] hover:ring-[#4a9eff]'
@@ -188,19 +187,19 @@ export const Palette: React.FC<PaletteProps> = ({
                         bg-[#252525] border border-[#3a3a3a]
                         flex items-center justify-center gap-2
                         py-2 text-[#aaa] hover:text-[#4a9eff]
+                        text-sm
                     "
                     title="Add custom color (Ctrl+Shift+A)"
                     aria-label="Add color"
                 >
                     <PlusIcon className="w-4 h-4" />
-
-                    <span className="text-xs">Add Color</span>
+                    <span>Add Color</span>
                 </button>
             )}
 
             {showCustomPicker && (
-                <div className="flex items-center justify-between gap-2 pt-2 border-t border-[#2a2a2a]">
-                    <span className="text-[9px] text-[#666] uppercase tracking-wider">
+                <div className="flex items-center justify-between gap-3 pt-2 border-t border-[#2a2a2a]">
+                    <span className="text-[10px] text-[#666] uppercase tracking-wider">
                         Custom
                     </span>
 
