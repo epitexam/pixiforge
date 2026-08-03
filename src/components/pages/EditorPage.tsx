@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useLayoutEffect } from 'react';
 import { Toaster, toast } from 'sonner';
 import { useToolStore } from '../../stores/toolStore';
 import { MenuBar } from '../organisms/MenuBar';
@@ -15,7 +15,7 @@ import { ExportOptions } from '../../hooks/useExport';
 import { usePaletteStore } from '../../stores/paletteStore';
 
 export const EditorPage: React.FC = () => {
-    const { clearCanvas } = useCanvasStore();
+    const { clearCanvas, width: gridWidth, height: gridHeight } = useCanvasStore();
     const { currentColor, setCurrentColor } = useToolStore();
     const {
         colors: paletteColors,
@@ -35,6 +35,62 @@ export const EditorPage: React.FC = () => {
     const { exportCanvas } = useExport(canvasRef);
     const { handleCopy, handlePaste } = useClipboard(canvasRef);
     const { exportPalette, handleImportPalette } = usePaletteActions();
+
+    const containerRef = useRef<HTMLDivElement>(null);
+    const [cellSize, setCellSize] = useState(24);
+
+    useLayoutEffect(() => {
+        let rafId: number;
+
+        const updateCellSize = () => {
+            const container = containerRef.current;
+            if (!container) return;
+            const rect = container.getBoundingClientRect();
+
+            if (rect.width === 0 && rect.height === 0) {
+                rafId = requestAnimationFrame(updateCellSize);
+                return;
+            }
+
+            const padding = 32;
+            const availableWidth = rect.width - padding;
+            const availableHeight = rect.height - padding;
+
+            const cols = gridWidth || 32;
+            const rows = gridHeight || 32;
+
+            const maxByWidth = availableWidth / cols;
+            const maxByHeight = availableHeight / rows;
+            let newCellSize = Math.min(maxByWidth, maxByHeight);
+
+
+            newCellSize = Math.max(newCellSize, 8);
+            newCellSize = Math.min(newCellSize, 64);
+            newCellSize = Math.floor(newCellSize);
+
+            setCellSize(prev => (prev !== newCellSize ? newCellSize : prev));
+        };
+
+
+        updateCellSize();
+
+        const container = containerRef.current;
+        if (!container) return;
+
+        const resizeObserver = new ResizeObserver(() => {
+            updateCellSize();
+        });
+        resizeObserver.observe(container);
+
+        window.addEventListener('resize', updateCellSize);
+
+        return () => {
+            if (rafId) cancelAnimationFrame(rafId);
+            resizeObserver.disconnect();
+            window.removeEventListener('resize', updateCellSize);
+        };
+    }, [gridWidth, gridHeight]);
+
 
     const handleExport = () => {
         setTempIncludeGrid(exportWithGrid);
@@ -162,10 +218,13 @@ export const EditorPage: React.FC = () => {
                 </aside>
 
                 <div className="flex flex-col flex-1 overflow-hidden">
-                    <section className="flex-1 flex items-center justify-center bg-[#0f0f0f] overflow-hidden relative">
+                    <section
+                        ref={containerRef}
+                        className="flex-1 flex items-center justify-center bg-[#0f0f0f] overflow-hidden relative"
+                    >
                         <Canvas
                             ref={canvasRef}
-                            cellSize={16}
+                            cellSize={cellSize}
                             scale={scale}
                             onScaleChange={setScale}
                             translateX={translateX}
@@ -174,7 +233,7 @@ export const EditorPage: React.FC = () => {
                             onTranslateYChange={setTranslateY}
                         />
                         <div className="absolute bottom-3 right-4 text-[9px] text-[#4a4a4a] tracking-[0.2em] uppercase bg-[#0f0f0f]/80 px-2.5 py-1 rounded-sm backdrop-blur-sm pointer-events-none">
-                            16px · 64×64
+                            {cellSize}px · {gridWidth}×{gridHeight}
                         </div>
                     </section>
 

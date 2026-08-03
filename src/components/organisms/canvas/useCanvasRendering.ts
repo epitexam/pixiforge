@@ -30,12 +30,21 @@ export const useCanvasRendering = ({
 }: UseCanvasRenderingProps) => {
     const offscreenCanvasRef = useRef<OffscreenCanvas | null>(null);
     const lastPixelsRef = useRef<Color[] | null>(null);
+    const prevCellSizeRef = useRef<number>(cellSize);
 
     useEffect(() => {
         const canvas = canvasRef.current;
         if (!canvas) return;
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
+
+        ctx.imageSmoothingEnabled = false;
+
+        if (prevCellSizeRef.current !== cellSize) {
+            offscreenCanvasRef.current = null;
+            lastPixelsRef.current = null;
+            prevCellSizeRef.current = cellSize;
+        }
 
         const dpr = window.devicePixelRatio || 1;
 
@@ -52,10 +61,18 @@ export const useCanvasRendering = ({
             offscreenCanvasRef.current.width !== logicalWidth ||
             offscreenCanvasRef.current.height !== logicalHeight) {
             offscreenCanvasRef.current = new OffscreenCanvas(logicalWidth, logicalHeight);
+            const offCtx = offscreenCanvasRef.current.getContext('2d');
+            if (offCtx) {
+                offCtx.imageSmoothingEnabled = false;
+            }
+            lastPixelsRef.current = null;
         }
+
         const offscreen = offscreenCanvasRef.current;
         const offCtx = offscreen.getContext('2d');
         if (!offCtx) return;
+
+        offCtx.imageSmoothingEnabled = false;
 
         const pixelsChanged =
             lastPixelsRef.current === null ||
@@ -114,6 +131,7 @@ export const useCanvasRendering = ({
         }
 
         ctx.save();
+        ctx.imageSmoothingEnabled = false;
         ctx.setTransform(scale, 0, 0, scale, translateX, translateY);
         ctx.drawImage(offscreen, 0, 0);
         ctx.restore();
