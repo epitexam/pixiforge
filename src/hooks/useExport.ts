@@ -9,6 +9,7 @@ export interface ExportOptions {
     includeGrid: boolean;
     scale?: number;
     fileName?: string;
+    transparent?: boolean;
 }
 
 export const useExport = (canvasRef: React.RefObject<CanvasHandle | null>) => {
@@ -18,11 +19,11 @@ export const useExport = (canvasRef: React.RefObject<CanvasHandle | null>) => {
             quality = 1,
             includeGrid,
             scale = 1,
-            fileName = 'pixiforge'
+            fileName = 'pixiforge',
+            transparent = false
         } = options;
 
         const { width, height, pixels: pixels1D, tileWidth, tileHeight } = useCanvasStore.getState();
-
 
         const finalWidth = width * scale;
         const finalHeight = height * scale;
@@ -31,7 +32,6 @@ export const useExport = (canvasRef: React.RefObject<CanvasHandle | null>) => {
         offscreen.width = finalWidth;
         offscreen.height = finalHeight;
         const ctx = offscreen.getContext('2d');
-
         if (!ctx) {
             toast.error('Failed to create export canvas');
             return;
@@ -39,12 +39,17 @@ export const useExport = (canvasRef: React.RefObject<CanvasHandle | null>) => {
 
         ctx.imageSmoothingEnabled = false;
 
+        const useTransparent = format === 'png' && transparent;
 
         let currentDrawColor = '';
         for (let y = 0; y < height; y++) {
             for (let x = 0; x < width; x++) {
                 const index = y * width + x;
                 const color = pixels1D[index] ?? DEFAULT_COLOR;
+
+                if (useTransparent && color === DEFAULT_COLOR) {
+                    continue;
+                }
 
                 if (color !== currentDrawColor) {
                     ctx.fillStyle = color;
@@ -55,12 +60,11 @@ export const useExport = (canvasRef: React.RefObject<CanvasHandle | null>) => {
             }
         }
 
-
+        // Grille
         if (includeGrid && scale >= 4) {
             const lineWidth = scale >= 8 ? 1 : 0.5;
 
-
-            ctx.strokeStyle = '#cccccc';
+            ctx.strokeStyle = 'rgba(200,200,200,0.8)';
             ctx.lineWidth = lineWidth;
             ctx.beginPath();
             for (let y = 0; y <= height; y++) {
@@ -75,7 +79,6 @@ export const useExport = (canvasRef: React.RefObject<CanvasHandle | null>) => {
             }
             ctx.stroke();
 
-            // Grille des Tiles
             ctx.strokeStyle = 'rgba(150, 150, 150, 0.6)';
             ctx.lineWidth = lineWidth * 2;
             ctx.beginPath();
@@ -117,12 +120,10 @@ export const useExport = (canvasRef: React.RefObject<CanvasHandle | null>) => {
 
                 toast.success('Image exportée avec succès');
             } catch (err) {
-
                 if (err instanceof DOMException && err.name === 'AbortError') return;
                 toast.error("Erreur lors de l'exportation");
             }
         } else {
-
             const dataUrl = offscreen.toDataURL(mimeType, quality);
             const link = document.createElement('a');
             link.download = `${fileName}.${fileExtension}`;

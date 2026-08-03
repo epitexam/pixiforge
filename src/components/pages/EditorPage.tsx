@@ -11,9 +11,9 @@ import { useCanvasStore } from '../../stores/canvaStore';
 import { CanvasHandle } from '../organisms/canvas/types';
 import { TileControls } from '../molecules/TileControls';
 import { useZoom, useExport, useClipboard, usePaletteActions } from '../../hooks';
+import { ExportOptions } from '../../hooks/useExport';
 import { usePaletteStore } from '../../stores/paletteStore';
 import ExportModal from '../molecules/ExportModal';
-import { ExportOptions } from '../../hooks/useExport';
 
 export const EditorPage: React.FC = () => {
     const { clearCanvas, width: gridWidth, height: gridHeight } = useCanvasStore();
@@ -26,8 +26,6 @@ export const EditorPage: React.FC = () => {
     } = usePaletteStore();
 
     const canvasRef = useRef<CanvasHandle>(null);
-
-
     const [showExportModal, setShowExportModal] = useState(false);
 
     const { scale, translateX, translateY, setScale, setTranslateX, setTranslateY, handleZoomIn, handleZoomOut, handleZoomReset } = useZoom();
@@ -45,27 +43,19 @@ export const EditorPage: React.FC = () => {
             const container = containerRef.current;
             if (!container) return;
             const rect = container.getBoundingClientRect();
-
             if (rect.width === 0 && rect.height === 0) {
                 rafId = requestAnimationFrame(updateCellSize);
                 return;
             }
-
             const padding = 32;
             const availableWidth = rect.width - padding;
             const availableHeight = rect.height - padding;
-
             const cols = gridWidth || 32;
             const rows = gridHeight || 32;
-
-            const maxByWidth = availableWidth / cols;
-            const maxByHeight = availableHeight / rows;
-            let newCellSize = Math.min(maxByWidth, maxByHeight);
-
+            let newCellSize = Math.min(availableWidth / cols, availableHeight / rows);
             newCellSize = Math.max(newCellSize, 8);
             newCellSize = Math.min(newCellSize, 64);
             newCellSize = Math.floor(newCellSize);
-
             setCellSize(prev => (prev !== newCellSize ? newCellSize : prev));
         };
 
@@ -88,6 +78,15 @@ export const EditorPage: React.FC = () => {
         };
     }, [gridWidth, gridHeight]);
 
+    const handleExport = () => {
+        setShowExportModal(true);
+    };
+
+    const handleExportConfirm = (options: ExportOptions) => {
+        exportCanvas(options);
+        setShowExportModal(false);
+    };
+
     const handleClearCanvas = () => {
         clearCanvas();
         toast.success('Canvas cleared');
@@ -97,11 +96,10 @@ export const EditorPage: React.FC = () => {
         <div className="flex flex-col h-screen w-screen bg-[#0d0d0d] overflow-hidden font-sans select-none">
             <Toaster position="top-center" richColors />
 
-
             <ExportModal
                 isOpen={showExportModal}
                 onClose={() => setShowExportModal(false)}
-                onExport={(options: ExportOptions) => exportCanvas(options)}
+                onExport={handleExportConfirm}
             />
 
             <header className="flex-none h-12 bg-[#1a1a1a] border-b border-[#2a2a2a] flex items-stretch z-20">
@@ -193,12 +191,7 @@ export const EditorPage: React.FC = () => {
                         <div className="w-px h-6 bg-[#2a2a2a] hidden sm:block" />
 
                         <div className="flex items-center gap-1.5">
-
-                            <button
-                                onClick={() => setShowExportModal(true)}
-                                className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium tracking-wide text-[#888] hover:text-[#4a9eff] border border-[#333] hover:border-[#4a9eff] rounded-md transition-all bg-[#252525] hover:bg-[#2a2a2a]"
-                                title="Export canvas"
-                            >
+                            <button onClick={handleExport} className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium tracking-wide text-[#888] hover:text-[#4a9eff] border border-[#333] hover:border-[#4a9eff] rounded-md transition-all bg-[#252525] hover:bg-[#2a2a2a]" title="Export canvas">
                                 <ImageIcon className="w-4 h-4" />
                                 <span className="hidden sm:inline">Export</span>
                             </button>

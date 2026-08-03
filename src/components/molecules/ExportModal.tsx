@@ -1,7 +1,6 @@
 import { useState } from 'react';
-import { ExportOptions } from '../../hooks/useExport'; // Assurez-vous que le chemin est correct
+import { ExportOptions } from '../../hooks/useExport';
 
-// On étend le type pour inclure 'bmp'
 export type ExportFormat = 'png' | 'jpeg' | 'bmp' | 'webp';
 
 interface ExportModalProps {
@@ -20,11 +19,10 @@ const formatOptions = [
 export default function ExportModal({ isOpen, onClose, onExport }: ExportModalProps) {
     const [format, setFormat] = useState<ExportFormat>('png');
     const [quality, setQuality] = useState(90);
-
-    // Nouveaux états internes
     const [fileName, setFileName] = useState('pixiforge');
     const [scale, setScale] = useState(8);
     const [includeGrid, setIncludeGrid] = useState(false);
+    const [transparent, setTransparent] = useState(true);
 
     if (!isOpen) return null;
 
@@ -37,6 +35,7 @@ export default function ExportModal({ isOpen, onClose, onExport }: ExportModalPr
             fileName: fileName.trim() || 'pixiforge',
             scale: Math.max(1, Number(scale) || 1),
             includeGrid,
+            transparent: format === 'png' ? transparent : undefined,
         };
         onExport(options);
         onClose();
@@ -45,7 +44,6 @@ export default function ExportModal({ isOpen, onClose, onExport }: ExportModalPr
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md">
             <div className="w-full max-w-md rounded-2xl bg-[#111] border border-[#2a2a2a] shadow-2xl p-6">
-
                 <div className="flex items-center justify-between mb-5">
                     <div>
                         <h2 className="text-lg font-semibold text-white">Export</h2>
@@ -56,7 +54,6 @@ export default function ExportModal({ isOpen, onClose, onExport }: ExportModalPr
                     </button>
                 </div>
 
-                {/* Nom du fichier */}
                 <div className="mb-6">
                     <p className="text-sm text-gray-300 mb-2">File Name</p>
                     <input
@@ -75,10 +72,11 @@ export default function ExportModal({ isOpen, onClose, onExport }: ExportModalPr
                             <button
                                 key={opt.value}
                                 onClick={() => setFormat(opt.value)}
-                                className={`p-3 rounded-xl border text-left transition group ${format === opt.value
-                                    ? 'bg-blue-500/10 border-blue-500'
-                                    : 'bg-[#1a1a1a] border-[#2a2a2a] hover:border-[#3a3a3a]'
-                                    }`}
+                                className={`p-3 rounded-xl border text-left transition group ${
+                                    format === opt.value
+                                        ? 'bg-blue-500/10 border-blue-500'
+                                        : 'bg-[#1a1a1a] border-[#2a2a2a] hover:border-[#3a3a3a]'
+                                }`}
                             >
                                 <div className="flex items-center justify-between">
                                     <span className="text-sm font-medium text-white">{opt.label}</span>
@@ -92,7 +90,6 @@ export default function ExportModal({ isOpen, onClose, onExport }: ExportModalPr
                     </div>
                 </div>
 
-                {/* Échelle et Qualité */}
                 <div className="flex gap-4 mb-6">
                     <div className="flex-1">
                         <p className="text-sm text-gray-300 mb-2">Scale (X)</p>
@@ -123,7 +120,6 @@ export default function ExportModal({ isOpen, onClose, onExport }: ExportModalPr
                     )}
                 </div>
 
-
                 <div className="mb-6 flex items-center gap-2">
                     <input
                         type="checkbox"
@@ -136,6 +132,21 @@ export default function ExportModal({ isOpen, onClose, onExport }: ExportModalPr
                         Include grid lines in export
                     </label>
                 </div>
+
+                {format === 'png' && (
+                    <div className="mb-6 flex items-center gap-2">
+                        <input
+                            type="checkbox"
+                            id="transparent"
+                            checked={transparent}
+                            onChange={(e) => setTransparent(e.target.checked)}
+                            className="w-4 h-4 accent-blue-500 cursor-pointer"
+                        />
+                        <label htmlFor="transparent" className="text-sm text-gray-300 cursor-pointer">
+                            Transparent background (empty pixels)
+                        </label>
+                    </div>
+                )}
 
                 <div className="flex justify-between items-center mt-8">
                     <button onClick={onClose} className="text-sm text-gray-400 hover:text-white transition">
