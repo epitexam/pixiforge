@@ -36,11 +36,8 @@ export const CustomColorIcon: React.FC<{ className?: string }> = ({ className })
         strokeLinecap="round"
         strokeLinejoin="round"
     >
-        <circle cx="12" cy="12" r="10" />
-        <circle cx="12" cy="12" r="3" />
-        <path d="M5 5 L8 8" />
-        <path d="M19 5 L16 8" />
-        <path d="M5 19 L8 16" />
-        <path d="M19 19 L16 16" />
+        <path d="M12 2C12 2 5 10 5 15a7 7 0 0 0 14 0c0-5-7-13-7-13Z" />
+        <line x1="12" y1="12" x2="12" y2="16" />
+        <line x1="10" y1="14" x2="14" y2="14" />
     </svg>
 );

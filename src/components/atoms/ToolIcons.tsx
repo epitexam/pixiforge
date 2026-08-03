@@ -2,25 +2,23 @@ import React from 'react';
 
 export const PencilIcon: React.FC<{ className?: string }> = ({ className }) => (
     <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M17 3L21 7L7 21H3V17L17 3Z" />
-        <path d="M15 5L19 9" />
+        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
     </svg>
 );
 
 export const EraserIcon: React.FC<{ className?: string }> = ({ className }) => (
     <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M9 21L21 9L15 3L3 15L9 21Z" />
-        <path d="M15 21H21" />
+        <path d="M7 21 2.7 16.7c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21" />
+        <path d="M22 21H7" />
+        <path d="m5 11 9 9" />
     </svg>
 );
 
 export const PickerIcon: React.FC<{ className?: string }> = ({ className }) => (
     <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M4 20L10 14" />
-        <path d="M12 8L16 12" />
-        <path d="M19 5L15 9" />
-        <circle cx="6" cy="18" r="2" />
-        <circle cx="18" cy="6" r="2" />
+        <path d="m2 22 1-1h3l9-9" />
+        <path d="M3 21v-3l9-9" />
+        <path d="m15 6 3.4-3.4a2.1 2.1 0 1 1 3 3L18 9l.4.4a2.1 2.1 0 1 1-3 3l-3.8-3.8a2.1 2.1 0 1 1 3-3Z" />
     </svg>
 );
 
