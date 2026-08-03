@@ -20,9 +20,9 @@ export const useZoomPan = ({
   onTranslateYChange,
   containerRef,
 }: UseZoomPanProps) => {
-  const [internalScale, setInternalScale] = useState(1);
-  const [internalTranslateX, setInternalTranslateX] = useState(0);
-  const [internalTranslateY, setInternalTranslateY] = useState(0);
+  const [internalScale, setInternalScale] = useState(externalScale);
+  const [internalTranslateX, setInternalTranslateX] = useState(externalTranslateX);
+  const [internalTranslateY, setInternalTranslateY] = useState(externalTranslateY);
 
   const scale = onScaleChange !== undefined ? externalScale : internalScale;
   const translateX = onTranslateXChange !== undefined ? externalTranslateX : internalTranslateX;
@@ -33,20 +33,16 @@ export const useZoomPan = ({
   const setTranslateY = onTranslateYChange || setInternalTranslateY;
 
   const scaleRef = useRef(scale);
+  scaleRef.current = scale;
+
   const translateXRef = useRef(translateX);
+  translateXRef.current = translateX;
+
   const translateYRef = useRef(translateY);
+  translateYRef.current = translateY;
 
-  useEffect(() => {
-    scaleRef.current = scale;
-  }, [scale]);
-
-  useEffect(() => {
-    translateXRef.current = translateX;
-  }, [translateX]);
-
-  useEffect(() => {
-    translateYRef.current = translateY;
-  }, [translateY]);
+  const settersRef = useRef({ setScale, setTranslateX, setTranslateY });
+  settersRef.current = { setScale, setTranslateX, setTranslateY };
 
   const handleZoom = useCallback((deltaY: number, mouseX: number, mouseY: number) => {
     const currentScale = scaleRef.current;
@@ -56,16 +52,20 @@ export const useZoomPan = ({
     const zoomFactor = deltaY > 0 ? ZOOM_FACTOR : 1 / ZOOM_FACTOR;
     const newScale = Math.min(Math.max(currentScale * zoomFactor, MIN_SCALE), MAX_SCALE);
 
+    if (newScale === currentScale) return;
+
     const canvasXUnderMouse = (mouseX - currentTranslateX) / currentScale;
     const canvasYUnderMouse = (mouseY - currentTranslateY) / currentScale;
 
     const newTranslateX = mouseX - newScale * canvasXUnderMouse;
     const newTranslateY = mouseY - newScale * canvasYUnderMouse;
 
+    const { setScale, setTranslateX, setTranslateY } = settersRef.current;
     setScale(newScale);
     setTranslateX(newTranslateX);
     setTranslateY(newTranslateY);
-  }, [setScale, setTranslateX, setTranslateY]);
+  }, []);
+
 
   useEffect(() => {
     const container = containerRef.current;

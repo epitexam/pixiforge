@@ -63,7 +63,7 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(
       selectTile,
       setTileMode,
     } = useCanvasStore();
-    const { activeTool, currentColor, setCurrentColor, setActiveTool } = useToolStore();
+    const { activeTool, currentColor, setCurrentColor } = useToolStore();
 
     const effectiveWidth = useMemo(
       () => propWidth ?? storeWidth,
@@ -107,16 +107,15 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(
       [getPixelIndexFromEvent],
     );
 
-    const { isInsideTile, checkTileBounds, handleMouseMoveTile, setIsInsideTile } =
-      useTileMode({
-        tileModeEnabled,
-        selectedTile,
-        tileWidth,
-        tileHeight,
-        effectiveWidth,
-        effectiveHeight,
-        getPixelIndex,
-      });
+    const { isInsideTile, checkTileBounds, handleMouseMoveTile } = useTileMode({
+      tileModeEnabled,
+      selectedTile,
+      tileWidth,
+      tileHeight,
+      effectiveWidth,
+      effectiveHeight,
+      getPixelIndex,
+    });
 
     const {
       selectionRect,
@@ -199,8 +198,7 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(
       handleMouseLeave,
     } = useMouseEvents({
       activeTool,
-      getPixelIndexFromEvent: (clientX, clientY, rect) =>
-        getPixelIndexFromEvent(clientX, clientY, rect),
+      getPixelIndexFromEvent,
       handlePixelAction,
       containerRef,
       selectionRect,
@@ -289,6 +287,8 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(
       );
     }, [tileModeEnabled, selectedTile, tileWidth, tileHeight, effectiveWidth, effectiveHeight, cellSize, scale, translateX, translateY, isInsideTile]);
 
+    const handleCloseTileMode = useCallback(() => setTileMode(false), [setTileMode]);
+
     const tileModeIndicator = useMemo(() => {
       if (!tileModeEnabled || !selectedTile) return null;
       return (
@@ -316,7 +316,7 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(
             ({selectedTile.col}, {selectedTile.row})
           </span>
           <button
-            onClick={() => setTileMode(false)}
+            onClick={handleCloseTileMode}
             style={{
               background: "transparent",
               border: "none",
@@ -332,24 +332,21 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(
           </button>
         </div>
       );
-    }, [tileModeEnabled, selectedTile, setTileMode]);
+    }, [tileModeEnabled, selectedTile, handleCloseTileMode]);
 
-    const getCursor = () => {
+    const cursor = useMemo(() => {
       if (isPanning) return "grabbing";
       if (tileModeEnabled && selectedTile && !isInsideTile) return "not-allowed";
       switch (activeTool) {
         case "select":
-          return "crosshair";
         case "picker":
-          return "crosshair";
         case "tileSelect":
           return "crosshair";
         default:
           return "default";
       }
-    };
+    }, [isPanning, tileModeEnabled, selectedTile, isInsideTile, activeTool]);
 
-    const originalHandleMouseDown = handleMouseDown;
     const customHandleMouseDown = useCallback(
       (e: React.MouseEvent) => {
         if (activeTool === "tileSelect") {
@@ -366,20 +363,28 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(
           }
           return;
         }
-        originalHandleMouseDown(e);
+        handleMouseDown(e);
       },
-      [activeTool, getPixelIndexFromEvent, tileWidth, tileHeight, selectTile, setTileMode, originalHandleMouseDown],
+      [activeTool, getPixelIndexFromEvent, tileWidth, tileHeight, selectTile, setTileMode, handleMouseDown],
     );
+
+    const containerStyle = useMemo(() => ({
+      width: effectiveWidth * cellSize,
+      height: effectiveHeight * cellSize,
+      cursor,
+    }), [effectiveWidth, cellSize, effectiveHeight, cursor]);
+
+    const canvasStyle = useMemo(() => ({
+      display: "block",
+      width: "100%",
+      height: "100%",
+    }), []);
 
     return (
       <div
         ref={containerRef}
         className={`relative inline-block ${className}`}
-        style={{
-          width: effectiveWidth * cellSize,
-          height: effectiveHeight * cellSize,
-          cursor: getCursor(),
-        }}
+        style={containerStyle}
         onMouseDown={customHandleMouseDown}
         onMouseMove={handleMouseMoveWrapper}
         onMouseUp={handleMouseUp}
@@ -387,11 +392,7 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(
       >
         <canvas
           ref={canvasRef}
-          style={{
-            display: "block",
-            width: "100%",
-            height: "100%",
-          }}
+          style={canvasStyle}
         />
         <SelectionOverlay
           rect={activeRect}
