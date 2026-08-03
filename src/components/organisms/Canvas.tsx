@@ -283,10 +283,56 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(
             backgroundColor: isInsideTile ? "rgba(0, 255, 255, 0.15)" : "rgba(255, 0, 0, 0.1)",
             pointerEvents: "none",
             zIndex: 10,
+            transition: "background-color 0.15s",
           }}
         />
       );
     }, [tileModeEnabled, selectedTile, tileWidth, tileHeight, effectiveWidth, effectiveHeight, cellSize, scale, translateX, translateY, isInsideTile]);
+
+    const tileModeIndicator = useMemo(() => {
+      if (!tileModeEnabled || !selectedTile) return null;
+      return (
+        <div
+          style={{
+            position: "absolute",
+            top: 8,
+            left: 8,
+            zIndex: 20,
+            background: "rgba(0,0,0,0.75)",
+            backdropFilter: "blur(6px)",
+            border: "1px solid #4a9eff",
+            borderRadius: 6,
+            padding: "4px 10px",
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            pointerEvents: "auto",
+            fontSize: 11,
+            color: "#ccc",
+          }}
+        >
+          <span style={{ color: "#4a9eff" }}>Tile mode</span>
+          <span>
+            ({selectedTile.col}, {selectedTile.row})
+          </span>
+          <button
+            onClick={() => setTileMode(false)}
+            style={{
+              background: "transparent",
+              border: "none",
+              color: "#aaa",
+              cursor: "pointer",
+              fontSize: 14,
+              padding: "0 2px",
+              lineHeight: 1,
+            }}
+            title="Exit tile mode"
+          >
+            ✕
+          </button>
+        </div>
+      );
+    }, [tileModeEnabled, selectedTile, setTileMode]);
 
     const getCursor = () => {
       if (isPanning) return "grabbing";
@@ -304,23 +350,26 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(
     };
 
     const originalHandleMouseDown = handleMouseDown;
-    const customHandleMouseDown = useCallback((e: React.MouseEvent) => {
-      if (activeTool === "tileSelect") {
-        const rect = containerRef.current?.getBoundingClientRect();
-        if (rect) {
-          const indices = getPixelIndexFromEvent(e.clientX, e.clientY, rect);
-          if (indices) {
-            const col = Math.floor(indices.x / tileWidth);
-            const row = Math.floor(indices.y / tileHeight);
-            selectTile(col, row);
-            setTileMode(true);
-            setActiveTool("pencil");
+    const customHandleMouseDown = useCallback(
+      (e: React.MouseEvent) => {
+        if (activeTool === "tileSelect") {
+          const rect = containerRef.current?.getBoundingClientRect();
+          if (rect) {
+            const indices = getPixelIndexFromEvent(e.clientX, e.clientY, rect);
+            if (indices) {
+              const col = Math.floor(indices.x / tileWidth);
+              const row = Math.floor(indices.y / tileHeight);
+              selectTile(col, row);
+              setTileMode(true);
+              toast.info(`Tile (${col}, ${row}) selected`, { duration: 1200 });
+            }
           }
+          return;
         }
-        return;
-      }
-      originalHandleMouseDown(e);
-    }, [activeTool, getPixelIndexFromEvent, tileWidth, tileHeight, selectTile, setTileMode, setActiveTool, originalHandleMouseDown]);
+        originalHandleMouseDown(e);
+      },
+      [activeTool, getPixelIndexFromEvent, tileWidth, tileHeight, selectTile, setTileMode, originalHandleMouseDown],
+    );
 
     return (
       <div
@@ -363,6 +412,7 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(
           backgroundColor="rgba(74, 158, 255, 0.1)"
         />
         {tileOverlay}
+        {tileModeIndicator}
       </div>
     );
   },
