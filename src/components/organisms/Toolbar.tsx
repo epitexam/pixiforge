@@ -29,28 +29,12 @@ export const Toolbar: React.FC<ToolbarProps> = ({
 
             const key = e.key.toLowerCase();
             switch (key) {
-                case 'b':
-                    e.preventDefault();
-                    setActiveTool('pencil');
-                    break;
-                case 'e':
-                    e.preventDefault();
-                    setActiveTool('eraser');
-                    break;
-                case 'i':
-                    e.preventDefault();
-                    setActiveTool('picker');
-                    break;
-                case 's':
-                    e.preventDefault();
-                    setActiveTool('select');
-                    break;
-                case 't':
-                    e.preventDefault();
-                    setActiveTool('tileSelect');
-                    break;
-                default:
-                    break;
+                case 'b': e.preventDefault(); setActiveTool('pencil'); break;
+                case 'e': e.preventDefault(); setActiveTool('eraser'); break;
+                case 'i': e.preventDefault(); setActiveTool('picker'); break;
+                case 's': e.preventDefault(); setActiveTool('select'); break;
+                case 't': e.preventDefault(); setActiveTool('tileSelect'); break;
+                default: break;
             }
         };
 
@@ -59,11 +43,9 @@ export const Toolbar: React.FC<ToolbarProps> = ({
     }, [setActiveTool]);
 
     return (
-        <div
-            className={`flex ${isVertical ? 'flex-col' : 'flex-row flex-wrap'} gap-1 ${className}`}
-        >
+        <div className={`flex ${isVertical ? 'flex-col' : 'flex-row flex-wrap'} gap-2 ${className}`}>
             {isVertical && (
-                <span className="text-[8px] tracking-[0.2em] text-[#444] uppercase text-center mb-2">
+                <span className="text-[10px] tracking-widest text-gray-600 uppercase text-center mb-1 font-medium">
                     Tools
                 </span>
             )}
@@ -80,10 +62,10 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                         className={`
                             group relative flex items-center justify-center
                             w-11 h-11
-                            rounded-sm transition-all duration-100 cursor-pointer
+                            rounded-xl transition-all duration-150 cursor-pointer
                             ${isActive
-                                ? 'bg-[#4a9eff]/15 text-[#4a9eff] ring-1 ring-[#4a9eff]/50'
-                                : 'text-[#555] hover:text-[#bbb] hover:bg-[#1e1e1e]'
+                                ? 'bg-blue-500/10 text-blue-400 border border-blue-500/50'
+                                : 'text-gray-500 hover:text-gray-200 hover:bg-[#1a1a1a] border border-transparent'
                             }
                         `}
                     >
@@ -91,21 +73,21 @@ export const Toolbar: React.FC<ToolbarProps> = ({
 
                         {isVertical && (
                             <span className="
-                                absolute left-full ml-2 px-2 py-1
-                                text-[10px] text-[#ccc] bg-[#1a1a1a] border border-[#333]
-                                rounded-sm whitespace-nowrap pointer-events-none
-                                opacity-0 group-hover:opacity-100 transition-opacity duration-100
-                                z-50 font-mono tracking-wider
+                                absolute left-full ml-3 px-2.5 py-1.5
+                                text-xs text-gray-200 bg-[#111] border border-[#2a2a2a]
+                                rounded-lg whitespace-nowrap pointer-events-none
+                                opacity-0 group-hover:opacity-100 transition-opacity duration-150
+                                z-50 font-mono tracking-wider shadow-xl
                             ">
                                 {label}
-                                <span className="ml-2 text-[#444]">{shortcut}</span>
+                                <span className="ml-2 text-gray-500">{shortcut}</span>
                             </span>
                         )}
                     </button>
                 );
             })}
 
-            {isVertical && <div className="w-8 h-px bg-[#252525] mx-auto my-2" />}
+            {isVertical && <div className="w-8 h-px bg-[#2a2a2a] mx-auto my-3" />}
         </div>
     );
 };

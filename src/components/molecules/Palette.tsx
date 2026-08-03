@@ -54,9 +54,7 @@ export const Palette: React.FC<PaletteProps> = ({
         colorInputRef.current?.click();
     };
 
-    const handleCustomColorChange = (
-        e: React.ChangeEvent<HTMLInputElement>
-    ) => {
+    const handleCustomColorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         onSelectColor(e.target.value);
     };
 
@@ -74,9 +72,7 @@ export const Palette: React.FC<PaletteProps> = ({
         }
 
         onAddColor(tempColor);
-
         toast.success('Color added');
-
         setShowAddModal(false);
     };
 
@@ -94,9 +90,7 @@ export const Palette: React.FC<PaletteProps> = ({
         if (editingIndex === null || !onUpdateColor) return;
 
         onUpdateColor(editingIndex, tempColor);
-
         toast.success('Color updated');
-
         setShowEditModal(false);
         setEditingIndex(null);
     };
@@ -106,48 +100,35 @@ export const Palette: React.FC<PaletteProps> = ({
         setEditingIndex(null);
     };
 
-    const handleRemoveColor = (
-        index: number,
-        e: React.MouseEvent
-    ) => {
+    const handleRemoveColor = (index: number, e: React.MouseEvent) => {
         e.stopPropagation();
-
         if (!onRemoveColor) return;
-
         onRemoveColor(index);
-
         toast.success('Color removed');
     };
 
     return (
-        <div className={`flex flex-col gap-3 w-full ${className}`}>
+        <div className={`flex flex-col gap-4 w-full ${className}`}>
             <div
-                className="max-h-[min(48rem, 120vh)] overflow-y-auto p-2"
+                className="max-h-[min(48rem, 120vh)] overflow-y-auto p-2 -m-2"
                 style={{ scrollbarWidth: 'thin' }}
             >
-                <div className="flex flex-wrap gap-2 justify-center items-center">
+                <div className="grid grid-cols-4 gap-2 justify-items-center">
                     {colors.map((color, index) => (
                         <div
                             key={`${color}-${index}`}
                             className="relative group"
-                            style={{
-                                width: swatchSize,
-                                height: swatchSize,
-                            }}
+                            style={{ width: swatchSize, height: swatchSize }}
                         >
                             <button
                                 onClick={() => onSelectColor(color)}
-                                onDoubleClick={() =>
-                                    handleOpenEditModal(index)
-                                }
+                                onDoubleClick={() => handleOpenEditModal(index)}
                                 className={`
-                                    w-full h-full rounded-sm transition-all duration-150
+                                    w-full h-full rounded-lg transition-all duration-150
                                     cursor-pointer hover:scale-110
-                                    hover:ring-2 hover:ring-[#4a9eff]
-                                    hover:ring-offset-2 hover:ring-offset-[#1a1a1a]
                                     ${color === selectedColor
-                                        ? 'ring-2 ring-[#4a9eff] ring-offset-2 ring-offset-[#1a1a1a] scale-105'
-                                        : 'ring-1 ring-[#3a3a3a] hover:ring-[#4a9eff]'
+                                        ? 'ring-2 ring-blue-500 ring-offset-2 ring-offset-[#111] scale-105'
+                                        : 'ring-1 ring-[#2a2a2a] hover:ring-blue-500'
                                     }
                                 `}
                                 style={{ backgroundColor: color }}
@@ -157,9 +138,7 @@ export const Palette: React.FC<PaletteProps> = ({
 
                             {onRemoveColor && colors.length > 1 && (
                                 <button
-                                    onClick={(e) =>
-                                        handleRemoveColor(index, e)
-                                    }
+                                    onClick={(e) => handleRemoveColor(index, e)}
                                     className="
                                         absolute -top-1.5 -right-1.5
                                         w-4 h-4 rounded-full
@@ -167,6 +146,7 @@ export const Palette: React.FC<PaletteProps> = ({
                                         flex items-center justify-center
                                         opacity-0 group-hover:opacity-100
                                         transition-opacity cursor-pointer
+                                        hover:bg-red-400
                                     "
                                     aria-label="Remove color"
                                 >
@@ -182,12 +162,11 @@ export const Palette: React.FC<PaletteProps> = ({
                 <button
                     onClick={handleOpenAddModal}
                     className="
-                        w-full rounded-sm transition-all duration-150
-                        cursor-pointer hover:bg-[#2a2a2a]
-                        bg-[#252525] border border-[#3a3a3a]
+                        w-full rounded-xl transition-all duration-150
+                        cursor-pointer hover:border-blue-500 hover:text-blue-400
+                        bg-[#1a1a1a] border border-[#2a2a2a]
                         flex items-center justify-center gap-2
-                        py-2 text-[#aaa] hover:text-[#4a9eff]
-                        text-sm
+                        py-2.5 text-gray-400 text-sm font-medium
                     "
                     title="Add custom color (Ctrl+Shift+A)"
                     aria-label="Add color"
@@ -198,22 +177,20 @@ export const Palette: React.FC<PaletteProps> = ({
             )}
 
             {showCustomPicker && (
-                <div className="flex items-center justify-between gap-3 pt-2 border-t border-[#2a2a2a]">
-                    <span className="text-[10px] text-[#666] uppercase tracking-wider">
+                <div className="flex items-center justify-between gap-3 pt-3 border-t border-[#2a2a2a]">
+                    <span className="text-xs text-gray-500 uppercase tracking-wider font-medium">
                         Custom
                     </span>
 
                     <button
                         onClick={handleCustomButtonClick}
                         className="
-                            w-8 h-8 rounded-md
-                            bg-[#252525] border border-[#3a3a3a]
-                            hover:border-[#4a9eff]
-                            hover:bg-[#2a2a2a]
-                            hover:text-[#4a9eff]
+                            w-9 h-9 rounded-lg
+                            bg-[#1a1a1a] border border-[#2a2a2a]
+                            hover:border-blue-500 hover:text-blue-400
                             transition-all duration-150
                             flex items-center justify-center
-                            text-[#aaa]
+                            text-gray-400
                         "
                         title="Choose custom color"
                         aria-label="Custom color"

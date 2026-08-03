@@ -26,38 +26,36 @@ export const TileControls: React.FC = () => {
     const rows = Math.ceil(64 / tileHeight);
 
     return (
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-5">
 
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-3">
                 <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-semibold tracking-[0.2em] text-[#666] uppercase">
-                        Tile size
-                    </span>
-                    <span className="text-[9px] text-[#555]">
-                        {tileWidth}×{tileHeight} cells
+                    <span className="text-xs text-gray-300 font-medium">Tile size</span>
+                    <span className="text-xs text-gray-500 font-mono">
+                        {tileWidth}×{tileHeight}
                     </span>
                 </div>
-                <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-1.5">
-                        <label className="text-xs text-[#888]">Width</label>
+                <div className="flex items-center gap-4">
+                    <div className="flex-1 flex flex-col gap-1.5">
+                        <label className="text-xs text-gray-500">Width</label>
                         <input
                             type="number"
                             value={tileWidth}
                             onChange={handleWidthChange}
-                            className="w-16 bg-[#252525] border border-[#333] rounded px-2 py-1 text-center text-[#ccc] text-sm focus:border-[#4a9eff] outline-none transition-colors"
+                            className="w-full bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg px-3 py-2 text-center text-gray-200 text-sm focus:border-blue-500 focus:outline-none transition-colors"
                             min={1}
                             max={256}
                             step={1}
                             aria-label="Tile width in cells"
                         />
                     </div>
-                    <div className="flex items-center gap-1.5">
-                        <label className="text-xs text-[#888]">Height</label>
+                    <div className="flex-1 flex flex-col gap-1.5">
+                        <label className="text-xs text-gray-500">Height</label>
                         <input
                             type="number"
                             value={tileHeight}
                             onChange={handleHeightChange}
-                            className="w-16 bg-[#252525] border border-[#333] rounded px-2 py-1 text-center text-[#ccc] text-sm focus:border-[#4a9eff] outline-none transition-colors"
+                            className="w-full bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg px-3 py-2 text-center text-gray-200 text-sm focus:border-blue-500 focus:outline-none transition-colors"
                             min={1}
                             max={256}
                             step={1}
@@ -65,31 +63,30 @@ export const TileControls: React.FC = () => {
                         />
                     </div>
                 </div>
-                <div className="text-[9px] text-[#555]">
+                <div className="text-xs text-gray-500 mt-1">
                     Grid: {cols}×{rows} tiles
                 </div>
             </div>
 
             <div className="w-full h-px bg-[#2a2a2a]" />
 
-            <div className="flex flex-col gap-3">
-                <div className="flex items-center gap-3">
-                    <div className="flex-1 flex items-center gap-2">
-                        <span className="text-[10px] font-semibold tracking-[0.2em] text-[#666] uppercase">
-                            Restriction
-                        </span>
+
+            <div className="flex flex-col gap-4">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        <span className="text-xs text-gray-300 font-medium">Restriction</span>
                         <span
-                            className={`text-[10px] font-medium px-2 py-0.5 rounded ${tileModeEnabled
-                                ? 'bg-[#4a9eff]/20 text-[#4a9eff] border border-[#4a9eff]/40'
-                                : 'bg-[#2a2a2a] text-[#666] border border-[#333]'
+                            className={`text-[10px] font-medium px-2 py-0.5 rounded-md ${tileModeEnabled
+                                ? 'bg-blue-500/10 text-blue-400 border border-blue-500/40'
+                                : 'bg-[#1a1a1a] text-gray-500 border border-[#2a2a2a]'
                                 }`}
                         >
                             {tileModeEnabled ? 'Active' : 'Inactive'}
                         </span>
                     </div>
                     {selectedTile && (
-                        <span className="text-sm text-[#4a9eff] whitespace-nowrap">
-                            Tile ({selectedTile.col}, {selectedTile.row})
+                        <span className="text-xs text-blue-400 whitespace-nowrap font-mono">
+                            ({selectedTile.col}, {selectedTile.row})
                         </span>
                     )}
                 </div>
@@ -97,17 +94,17 @@ export const TileControls: React.FC = () => {
                 <div className="flex items-center gap-2">
                     <button
                         onClick={toggleTileMode}
-                        className={`flex-1 px-3 py-1.5 text-sm font-medium rounded transition-colors ${tileModeEnabled
-                            ? 'bg-[#4a9eff] text-white hover:bg-[#3a8eff]'
-                            : 'bg-[#252525] text-[#aaa] border border-[#333] hover:bg-[#2f2f2f] hover:border-[#4a9eff]'
+                        className={`flex-1 px-3 py-2 text-sm font-medium rounded-lg transition-all ${tileModeEnabled
+                            ? 'bg-blue-500 text-white hover:bg-blue-600 shadow'
+                            : 'bg-[#1a1a1a] text-gray-400 border border-[#2a2a2a] hover:bg-[#222] hover:border-blue-500 hover:text-blue-400'
                             }`}
                     >
-                        {tileModeEnabled ? 'Disable restriction' : 'Enable restriction'}
+                        {tileModeEnabled ? 'Disable' : 'Enable'}
                     </button>
                     {tileModeEnabled && (
                         <button
                             onClick={() => setTileMode(false)}
-                            className="px-3 py-1.5 text-sm font-medium text-[#cf6679] hover:text-white hover:bg-[#cf6679]/20 rounded border border-[#cf6679]/30 transition-all"
+                            className="px-3 py-2 text-sm font-medium text-red-400 hover:text-white hover:bg-red-500/20 rounded-lg border border-red-500/30 transition-all"
                         >
                             Exit
                         </button>
@@ -115,11 +112,11 @@ export const TileControls: React.FC = () => {
                 </div>
 
                 {tileModeEnabled ? (
-                    <div className="text-[10px] text-[#4a9eff] bg-[#4a9eff]/5 rounded p-1.5 border border-[#4a9eff]/20 text-center">
+                    <div className="text-xs text-blue-400 bg-blue-500/5 rounded-lg p-2.5 border border-blue-500/20 text-center">
                         Drawing is restricted to the selected tile
                     </div>
                 ) : !selectedTile ? (
-                    <div className="text-[10px] text-[#666] text-center">
+                    <div className="text-xs text-gray-500 text-center">
                         Use the Tile Select tool to pick a tile
                     </div>
                 ) : null}

@@ -71,59 +71,68 @@ const ColorModal: React.FC<ColorModalProps> = ({
 
     return (
         <div
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md"
             onClick={(e) => {
                 if (e.target === e.currentTarget) onCancel();
             }}
         >
             <div
                 ref={modalRef}
-                className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-6 shadow-xl w-96"
+                className="w-full max-w-md rounded-2xl bg-[#111] border border-[#2a2a2a] shadow-2xl p-6"
             >
-                <h3 className="text-base font-bold text-white mb-2">
-                    {title}
-                </h3>
 
-                <p className="text-xs text-[#888] mb-4">
-                    {description}
-                </p>
+                <div className="flex items-center justify-between mb-5">
+                    <div>
+                        <h2 className="text-lg font-semibold text-white">{title}</h2>
+                        <p className="text-sm text-gray-400">{description}</p>
+                    </div>
+                    <button
+                        onClick={onCancel}
+                        className="text-gray-500 hover:text-white transition"
+                    >
+                        ✕
+                    </button>
+                </div>
 
-                <div className="flex items-center gap-4 mb-5">
-                    <input
-                        ref={inputRef}
-                        type="color"
-                        value={color}
-                        onChange={(e) => onChangeColor(e.target.value)}
-                        className="w-16 h-16 rounded border-2 border-[#444] cursor-pointer bg-transparent hover:border-[#4a9eff] transition"
-                    />
-
-                    <div className="flex-1">
-                        <div className="text-xs text-[#888] mb-1">
-                            Live Preview
-                        </div>
-
-                        <div
-                            className="w-full h-10 rounded-md border border-[#333] shadow-inner"
-                            style={{ backgroundColor: color }}
+                {/* Zone de sélection de couleur */}
+                <div className="mb-6">
+                    <p className="text-sm text-gray-300 mb-3">Color Selection</p>
+                    <div className="flex items-center gap-4">
+                        <input
+                            ref={inputRef}
+                            type="color"
+                            value={color}
+                            onChange={(e) => onChangeColor(e.target.value)}
+                            className="w-16 h-16 rounded-xl border border-[#2a2a2a] cursor-pointer bg-[#1a1a1a] p-1 focus:outline-none focus:border-blue-500 transition"
                         />
 
-                        <div className="text-[10px] text-[#555] mt-1 font-mono">
-                            {color}
+                        <div className="flex-1">
+                            <div className="text-sm text-gray-300 mb-2">
+                                Live Preview
+                            </div>
+                            <div
+                                className="w-full h-10 rounded-lg border border-[#2a2a2a] shadow-inner transition-colors"
+                                style={{ backgroundColor: color }}
+                            />
+                            <div className="text-xs text-gray-500 mt-2 font-mono uppercase tracking-wider">
+                                {color}
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div className="flex justify-end gap-3">
+
+                <div className="flex justify-between items-center mt-8">
                     <button
                         onClick={onCancel}
-                        className="px-4 py-1.5 text-xs font-medium bg-[#252525] border border-[#333] rounded-md hover:bg-[#2a2a2a] text-[#aaa] transition"
+                        className="text-sm text-gray-400 hover:text-white transition"
                     >
                         Cancel
                     </button>
 
                     <button
                         onClick={onConfirm}
-                        className="px-4 py-1.5 text-xs font-medium bg-[#4a9eff] border border-[#4a9eff] rounded-md hover:bg-[#3a8eff] text-white transition"
+                        className="px-5 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium transition shadow"
                     >
                         {confirmLabel}
                     </button>

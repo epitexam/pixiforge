@@ -1,11 +1,13 @@
 import { useState } from 'react';
+import { ExportOptions } from '../../hooks/useExport'; // Assurez-vous que le chemin est correct
 
+// On étend le type pour inclure 'bmp'
 export type ExportFormat = 'png' | 'jpeg' | 'bmp' | 'webp';
 
 interface ExportModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onExport: (format: ExportFormat, quality?: number) => void;
+    onExport: (options: ExportOptions) => void;
 }
 
 const formatOptions = [
@@ -19,16 +21,24 @@ export default function ExportModal({ isOpen, onClose, onExport }: ExportModalPr
     const [format, setFormat] = useState<ExportFormat>('png');
     const [quality, setQuality] = useState(90);
 
+    // Nouveaux états internes
+    const [fileName, setFileName] = useState('pixiforge');
+    const [scale, setScale] = useState(8);
+    const [includeGrid, setIncludeGrid] = useState(false);
+
     if (!isOpen) return null;
 
     const showQuality = format === 'jpeg' || format === 'webp';
 
     const handleExport = () => {
-        if (showQuality) {
-            onExport(format, quality / 100);
-        } else {
-            onExport(format);
-        }
+        const options: ExportOptions = {
+            format: format as 'png' | 'jpeg' | 'webp',
+            quality: showQuality ? quality / 100 : undefined,
+            fileName: fileName.trim() || 'pixiforge',
+            scale: Math.max(1, Number(scale) || 1),
+            includeGrid,
+        };
+        onExport(options);
         onClose();
     };
 
@@ -41,14 +51,22 @@ export default function ExportModal({ isOpen, onClose, onExport }: ExportModalPr
                         <h2 className="text-lg font-semibold text-white">Export</h2>
                         <p className="text-sm text-gray-400">Download your canvas</p>
                     </div>
-                    <button
-                        onClick={onClose}
-                        className="text-gray-500 hover:text-white transition"
-                    >
+                    <button onClick={onClose} className="text-gray-500 hover:text-white transition">
                         ✕
                     </button>
                 </div>
 
+                {/* Nom du fichier */}
+                <div className="mb-6">
+                    <p className="text-sm text-gray-300 mb-2">File Name</p>
+                    <input
+                        type="text"
+                        value={fileName}
+                        onChange={(e) => setFileName(e.target.value)}
+                        className="w-full bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500 transition"
+                        placeholder="pixiforge"
+                    />
+                </div>
 
                 <div className="mb-6">
                     <p className="text-sm text-gray-300 mb-3">Format</p>
@@ -74,32 +92,55 @@ export default function ExportModal({ isOpen, onClose, onExport }: ExportModalPr
                     </div>
                 </div>
 
-
-                {showQuality && (
-                    <div className="mb-6">
-                        <div className="flex justify-between mb-2">
-                            <span className="text-sm text-gray-300">Quality</span>
-                            <span className="text-sm text-white font-medium">{quality}%</span>
-                        </div>
+                {/* Échelle et Qualité */}
+                <div className="flex gap-4 mb-6">
+                    <div className="flex-1">
+                        <p className="text-sm text-gray-300 mb-2">Scale (X)</p>
                         <input
-                            type="range"
+                            type="number"
                             min="1"
-                            max="100"
-                            value={quality}
-                            onChange={(e) => setQuality(Number(e.target.value))}
-                            className="w-full accent-blue-500 cursor-pointer"
+                            max="64"
+                            value={scale}
+                            onChange={(e) => setScale(Number(e.target.value))}
+                            className="w-full bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500 transition"
                         />
                     </div>
-                )}
+                    {showQuality && (
+                        <div className="flex-1">
+                            <div className="flex justify-between mb-2">
+                                <span className="text-sm text-gray-300">Quality</span>
+                                <span className="text-sm text-white font-medium">{quality}%</span>
+                            </div>
+                            <input
+                                type="range"
+                                min="1"
+                                max="100"
+                                value={quality}
+                                onChange={(e) => setQuality(Number(e.target.value))}
+                                className="w-full accent-blue-500 cursor-pointer mt-3"
+                            />
+                        </div>
+                    )}
+                </div>
 
-                <div className="flex justify-between items-center mt-6">
-                    <button
-                        onClick={onClose}
-                        className="text-sm text-gray-400 hover:text-white transition"
-                    >
+
+                <div className="mb-6 flex items-center gap-2">
+                    <input
+                        type="checkbox"
+                        id="includeGrid"
+                        checked={includeGrid}
+                        onChange={(e) => setIncludeGrid(e.target.checked)}
+                        className="w-4 h-4 accent-blue-500 cursor-pointer"
+                    />
+                    <label htmlFor="includeGrid" className="text-sm text-gray-300 cursor-pointer">
+                        Include grid lines in export
+                    </label>
+                </div>
+
+                <div className="flex justify-between items-center mt-8">
+                    <button onClick={onClose} className="text-sm text-gray-400 hover:text-white transition">
                         Cancel
                     </button>
-
                     <button
                         onClick={handleExport}
                         className="px-5 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium transition shadow"

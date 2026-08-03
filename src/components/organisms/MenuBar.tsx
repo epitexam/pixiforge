@@ -82,37 +82,37 @@ export const MenuBar: React.FC<MenuBarProps> = ({ className = '' }) => {
     return (
         <nav className={`flex items-stretch h-12 ${className}`}>
             <div className="flex items-center px-4 border-r border-[#2a2a2a]">
-                <span className="text-[11px] font-bold tracking-[0.25em] text-[#4a9eff] uppercase">
+                <span className="text-xs font-bold tracking-widest text-blue-500 uppercase">
                     PixiForge
                 </span>
             </div>
 
-            <div className="flex items-stretch overflow-x-auto">
+            <div className="flex items-stretch overflow-x-auto px-2 gap-1">
                 <button
                     onClick={handleNew}
-                    className="flex items-center gap-2 px-4 text-[12px] text-[#888] hover:text-[#ddd] hover:bg-[#1f1f1f] transition-colors duration-100 whitespace-nowrap"
+                    className="flex items-center gap-2 px-4 text-sm text-gray-400 hover:text-white hover:bg-[#1a1a1a] rounded-lg transition-colors duration-100 whitespace-nowrap my-auto h-9"
                     title="New (Ctrl+N)"
                 >
                     <NewFileIcon className="w-4 h-4" />
-                    <span className="hidden sm:inline tracking-wider">New</span>
+                    <span className="hidden sm:inline">New</span>
                 </button>
-                <div className="w-px h-6 my-auto bg-[#2a2a2a] mx-1" />
+                
                 <button
                     onClick={handleOpen}
-                    className="flex items-center gap-2 px-4 text-[12px] text-[#888] hover:text-[#ddd] hover:bg-[#1f1f1f] transition-colors duration-100 whitespace-nowrap"
+                    className="flex items-center gap-2 px-4 text-sm text-gray-400 hover:text-white hover:bg-[#1a1a1a] rounded-lg transition-colors duration-100 whitespace-nowrap my-auto h-9"
                     title="Open (Ctrl+O)"
                 >
                     <OpenFileIcon className="w-4 h-4" />
-                    <span className="hidden sm:inline tracking-wider">Open</span>
+                    <span className="hidden sm:inline">Open</span>
                 </button>
-                <div className="w-px h-6 my-auto bg-[#2a2a2a] mx-1" />
+                
                 <button
                     onClick={handleSave}
-                    className="flex items-center gap-2 px-4 text-[12px] text-[#888] hover:text-[#ddd] hover:bg-[#1f1f1f] transition-colors duration-100 whitespace-nowrap"
+                    className="flex items-center gap-2 px-4 text-sm text-gray-400 hover:text-white hover:bg-[#1a1a1a] rounded-lg transition-colors duration-100 whitespace-nowrap my-auto h-9"
                     title="Save (Ctrl+S)"
                 >
                     <SaveFileIcon className="w-4 h-4" />
-                    <span className="hidden sm:inline tracking-wider">Save</span>
+                    <span className="hidden sm:inline">Save</span>
                 </button>
             </div>
         </nav>

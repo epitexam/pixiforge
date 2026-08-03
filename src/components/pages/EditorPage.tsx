@@ -6,13 +6,14 @@ import { Toolbar } from '../organisms/Toolbar';
 import { Palette } from '../molecules/Palette';
 import { Canvas } from '../organisms/Canvas';
 import { ZoomControls } from '../atoms/ZoomControls';
-import { CopyIcon, PasteIcon, ClearIcon, DownloadIcon, UploadIcon, ImageIcon, GridIcon } from '../atoms/EditorIcons';
+import { CopyIcon, PasteIcon, ClearIcon, DownloadIcon, UploadIcon, ImageIcon } from '../atoms/EditorIcons';
 import { useCanvasStore } from '../../stores/canvaStore';
 import { CanvasHandle } from '../organisms/canvas/types';
 import { TileControls } from '../molecules/TileControls';
 import { useZoom, useExport, useClipboard, usePaletteActions } from '../../hooks';
-import { ExportOptions } from '../../hooks/useExport';
 import { usePaletteStore } from '../../stores/paletteStore';
+import ExportModal from '../molecules/ExportModal';
+import { ExportOptions } from '../../hooks/useExport';
 
 export const EditorPage: React.FC = () => {
     const { clearCanvas, width: gridWidth, height: gridHeight } = useCanvasStore();
@@ -25,11 +26,9 @@ export const EditorPage: React.FC = () => {
     } = usePaletteStore();
 
     const canvasRef = useRef<CanvasHandle>(null);
-    const [exportWithGrid, setExportWithGrid] = useState(true);
+
+
     const [showExportModal, setShowExportModal] = useState(false);
-    const [exportFormat, setExportFormat] = useState<'png' | 'jpeg' | 'webp'>('png');
-    const [exportQuality, setExportQuality] = useState(1);
-    const [tempIncludeGrid, setTempIncludeGrid] = useState(true);
 
     const { scale, translateX, translateY, setScale, setTranslateX, setTranslateY, handleZoomIn, handleZoomOut, handleZoomReset } = useZoom();
     const { exportCanvas } = useExport(canvasRef);
@@ -63,14 +62,12 @@ export const EditorPage: React.FC = () => {
             const maxByHeight = availableHeight / rows;
             let newCellSize = Math.min(maxByWidth, maxByHeight);
 
-
             newCellSize = Math.max(newCellSize, 8);
             newCellSize = Math.min(newCellSize, 64);
             newCellSize = Math.floor(newCellSize);
 
             setCellSize(prev => (prev !== newCellSize ? newCellSize : prev));
         };
-
 
         updateCellSize();
 
@@ -91,22 +88,6 @@ export const EditorPage: React.FC = () => {
         };
     }, [gridWidth, gridHeight]);
 
-
-    const handleExport = () => {
-        setTempIncludeGrid(exportWithGrid);
-        setShowExportModal(true);
-    };
-
-    const confirmExport = () => {
-        const options: ExportOptions = {
-            format: exportFormat,
-            quality: exportFormat === 'png' ? undefined : exportQuality,
-            includeGrid: tempIncludeGrid,
-        };
-        exportCanvas(options);
-        setShowExportModal(false);
-    };
-
     const handleClearCanvas = () => {
         clearCanvas();
         toast.success('Canvas cleared');
@@ -116,54 +97,12 @@ export const EditorPage: React.FC = () => {
         <div className="flex flex-col h-screen w-screen bg-[#0d0d0d] overflow-hidden font-sans select-none">
             <Toaster position="top-center" richColors />
 
-            {showExportModal && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                    <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-6 w-80 shadow-xl">
-                        <h3 className="text-lg font-semibold text-white mb-4">Export Canvas</h3>
-                        <div className="mb-4">
-                            <label className="block text-sm text-[#aaa] mb-1">Format</label>
-                            <select
-                                value={exportFormat}
-                                onChange={(e) => setExportFormat(e.target.value as 'png' | 'jpeg' | 'webp')}
-                                className="w-full bg-[#252525] border border-[#333] rounded-md px-3 py-2 text-white"
-                            >
-                                <option value="png">PNG (lossless)</option>
-                                <option value="jpeg">JPEG</option>
-                                <option value="webp">WebP</option>
-                            </select>
-                        </div>
-                        {exportFormat !== 'png' && (
-                            <div className="mb-4">
-                                <label className="block text-sm text-[#aaa] mb-1">Quality: {Math.round(exportQuality * 100)}%</label>
-                                <input
-                                    type="range"
-                                    min="0"
-                                    max="1"
-                                    step="0.01"
-                                    value={exportQuality}
-                                    onChange={(e) => setExportQuality(parseFloat(e.target.value))}
-                                    className="w-full"
-                                />
-                            </div>
-                        )}
-                        <div className="mb-4">
-                            <label className="flex items-center gap-2 text-sm text-[#aaa]">
-                                <input
-                                    type="checkbox"
-                                    checked={tempIncludeGrid}
-                                    onChange={(e) => setTempIncludeGrid(e.target.checked)}
-                                    className="w-4 h-4"
-                                />
-                                Include grid
-                            </label>
-                        </div>
-                        <div className="flex justify-end gap-3">
-                            <button onClick={() => setShowExportModal(false)} className="px-4 py-2 text-sm bg-[#252525] border border-[#333] rounded-md hover:bg-[#2a2a2a] text-[#aaa]">Cancel</button>
-                            <button onClick={confirmExport} className="px-4 py-2 text-sm bg-[#4a9eff] border border-[#4a9eff] rounded-md hover:bg-[#3a8eff] text-white">Export</button>
-                        </div>
-                    </div>
-                </div>
-            )}
+
+            <ExportModal
+                isOpen={showExportModal}
+                onClose={() => setShowExportModal(false)}
+                onExport={(options: ExportOptions) => exportCanvas(options)}
+            />
 
             <header className="flex-none h-12 bg-[#1a1a1a] border-b border-[#2a2a2a] flex items-stretch z-20">
                 <MenuBar />
@@ -254,12 +193,14 @@ export const EditorPage: React.FC = () => {
                         <div className="w-px h-6 bg-[#2a2a2a] hidden sm:block" />
 
                         <div className="flex items-center gap-1.5">
-                            <button onClick={handleExport} className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium tracking-wide text-[#888] hover:text-[#4a9eff] border border-[#333] hover:border-[#4a9eff] rounded-md transition-all bg-[#252525] hover:bg-[#2a2a2a]" title="Export canvas">
+
+                            <button
+                                onClick={() => setShowExportModal(true)}
+                                className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium tracking-wide text-[#888] hover:text-[#4a9eff] border border-[#333] hover:border-[#4a9eff] rounded-md transition-all bg-[#252525] hover:bg-[#2a2a2a]"
+                                title="Export canvas"
+                            >
                                 <ImageIcon className="w-4 h-4" />
                                 <span className="hidden sm:inline">Export</span>
-                            </button>
-                            <button onClick={() => setExportWithGrid(!exportWithGrid)} className={`w-8 h-8 flex items-center justify-center rounded-md border transition-all ${exportWithGrid ? 'bg-[#4a9eff] text-white border-[#4a9eff]' : 'bg-[#252525] text-[#888] border-[#333] hover:border-[#4a9eff] hover:text-[#4a9eff]'}`} title={exportWithGrid ? "Export includes grid" : "Export without grid"}>
-                                <GridIcon className="w-4 h-4" />
                             </button>
                         </div>
 
