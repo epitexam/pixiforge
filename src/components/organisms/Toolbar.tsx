@@ -61,7 +61,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                         aria-pressed={isActive}
                         className={`
                             group relative flex items-center justify-center
-                            w-11 h-11
+                            w-9 h-9 sm:w-11 sm:h-11
                             rounded-xl transition-all duration-150 cursor-pointer
                             ${isActive
                                 ? 'bg-blue-500/10 text-blue-400 border border-blue-500/50'
@@ -69,10 +69,11 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                             }
                         `}
                     >
-                        <Icon className="w-5 h-5" />
+                        <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
 
                         {isVertical && (
                             <span className="
+                                hidden md:block
                                 absolute left-full ml-3 px-2.5 py-1.5
                                 text-xs text-gray-200 bg-[#111] border border-[#2a2a2a]
                                 rounded-lg whitespace-nowrap pointer-events-none

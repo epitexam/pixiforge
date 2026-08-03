@@ -81,8 +81,8 @@ export const MenuBar: React.FC<MenuBarProps> = ({ className = '' }) => {
 
     return (
         <nav className={`flex items-stretch h-12 ${className}`}>
-            <div className="flex items-center px-4 border-r border-[#2a2a2a]">
-                <span className="text-xs font-bold tracking-widest text-blue-500 uppercase">
+            <div className="flex items-center px-2 sm:px-4 border-r border-[#2a2a2a] shrink-0">
+                <span className="text-xs font-bold tracking-widest text-blue-500 uppercase whitespace-nowrap">
                     PixiForge
                 </span>
             </div>
@@ -90,7 +90,7 @@ export const MenuBar: React.FC<MenuBarProps> = ({ className = '' }) => {
             <div className="flex items-stretch overflow-x-auto px-2 gap-1">
                 <button
                     onClick={handleNew}
-                    className="flex items-center gap-2 px-4 text-sm text-gray-400 hover:text-white hover:bg-[#1a1a1a] rounded-lg transition-colors duration-100 whitespace-nowrap my-auto h-9"
+                    className="flex items-center gap-2 px-2.5 sm:px-4 text-sm text-gray-400 hover:text-white hover:bg-[#1a1a1a] rounded-lg transition-colors duration-100 whitespace-nowrap my-auto h-9 shrink-0"
                     title="New (Ctrl+N)"
                 >
                     <NewFileIcon className="w-4 h-4" />
@@ -99,7 +99,7 @@ export const MenuBar: React.FC<MenuBarProps> = ({ className = '' }) => {
                 
                 <button
                     onClick={handleOpen}
-                    className="flex items-center gap-2 px-4 text-sm text-gray-400 hover:text-white hover:bg-[#1a1a1a] rounded-lg transition-colors duration-100 whitespace-nowrap my-auto h-9"
+                    className="flex items-center gap-2 px-2.5 sm:px-4 text-sm text-gray-400 hover:text-white hover:bg-[#1a1a1a] rounded-lg transition-colors duration-100 whitespace-nowrap my-auto h-9 shrink-0"
                     title="Open (Ctrl+O)"
                 >
                     <OpenFileIcon className="w-4 h-4" />
@@ -108,7 +108,7 @@ export const MenuBar: React.FC<MenuBarProps> = ({ className = '' }) => {
                 
                 <button
                     onClick={handleSave}
-                    className="flex items-center gap-2 px-4 text-sm text-gray-400 hover:text-white hover:bg-[#1a1a1a] rounded-lg transition-colors duration-100 whitespace-nowrap my-auto h-9"
+                    className="flex items-center gap-2 px-2.5 sm:px-4 text-sm text-gray-400 hover:text-white hover:bg-[#1a1a1a] rounded-lg transition-colors duration-100 whitespace-nowrap my-auto h-9 shrink-0"
                     title="Save (Ctrl+S)"
                 >
                     <SaveFileIcon className="w-4 h-4" />

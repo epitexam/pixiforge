@@ -113,7 +113,7 @@ export const Palette: React.FC<PaletteProps> = ({
                 className="max-h-[min(48rem, 120vh)] overflow-y-auto p-2 -m-2"
                 style={{ scrollbarWidth: 'thin' }}
             >
-                <div className="grid grid-cols-4 gap-2 justify-items-center">
+                <div className="grid grid-cols-[repeat(auto-fill,minmax(2rem,1fr))] gap-2 justify-items-center">
                     {colors.map((color, index) => (
                         <div
                             key={`${color}-${index}`}

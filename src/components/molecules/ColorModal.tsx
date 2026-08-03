@@ -71,42 +71,41 @@ const ColorModal: React.FC<ColorModalProps> = ({
 
     return (
         <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md p-4"
             onClick={(e) => {
                 if (e.target === e.currentTarget) onCancel();
             }}
         >
             <div
                 ref={modalRef}
-                className="w-full max-w-md rounded-2xl bg-[#111] border border-[#2a2a2a] shadow-2xl p-6"
+                className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-2xl bg-[#111] border border-[#2a2a2a] shadow-2xl p-4 sm:p-6"
             >
 
-                <div className="flex items-center justify-between mb-5">
-                    <div>
-                        <h2 className="text-lg font-semibold text-white">{title}</h2>
+                <div className="flex items-start justify-between gap-3 mb-5">
+                    <div className="min-w-0">
+                        <h2 className="text-lg font-semibold text-white truncate">{title}</h2>
                         <p className="text-sm text-gray-400">{description}</p>
                     </div>
                     <button
                         onClick={onCancel}
-                        className="text-gray-500 hover:text-white transition"
+                        className="shrink-0 text-gray-500 hover:text-white transition"
                     >
                         ✕
                     </button>
                 </div>
 
-                {/* Zone de sélection de couleur */}
                 <div className="mb-6">
                     <p className="text-sm text-gray-300 mb-3">Color Selection</p>
-                    <div className="flex items-center gap-4">
+                    <div className="flex flex-col sm:flex-row items-center gap-4">
                         <input
                             ref={inputRef}
                             type="color"
                             value={color}
                             onChange={(e) => onChangeColor(e.target.value)}
-                            className="w-16 h-16 rounded-xl border border-[#2a2a2a] cursor-pointer bg-[#1a1a1a] p-1 focus:outline-none focus:border-blue-500 transition"
+                            className="w-16 h-16 shrink-0 rounded-xl border border-[#2a2a2a] cursor-pointer bg-[#1a1a1a] p-1 focus:outline-none focus:border-blue-500 transition"
                         />
 
-                        <div className="flex-1">
+                        <div className="w-full flex-1">
                             <div className="text-sm text-gray-300 mb-2">
                                 Live Preview
                             </div>

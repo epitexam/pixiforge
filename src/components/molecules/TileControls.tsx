@@ -35,8 +35,8 @@ export const TileControls: React.FC = () => {
                         {tileWidth}×{tileHeight}
                     </span>
                 </div>
-                <div className="flex items-center gap-4">
-                    <div className="flex-1 flex flex-col gap-1.5">
+                <div className="flex flex-col sm:flex-row items-center gap-4">
+                    <div className="w-full flex-1 flex flex-col gap-1.5">
                         <label className="text-xs text-gray-500">Width</label>
                         <input
                             type="number"
@@ -49,7 +49,7 @@ export const TileControls: React.FC = () => {
                             aria-label="Tile width in cells"
                         />
                     </div>
-                    <div className="flex-1 flex flex-col gap-1.5">
+                    <div className="w-full flex-1 flex flex-col gap-1.5">
                         <label className="text-xs text-gray-500">Height</label>
                         <input
                             type="number"
@@ -72,7 +72,7 @@ export const TileControls: React.FC = () => {
 
 
             <div className="flex flex-col gap-4">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between flex-wrap gap-2">
                     <div className="flex items-center gap-2">
                         <span className="text-xs text-gray-300 font-medium">Restriction</span>
                         <span

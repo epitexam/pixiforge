@@ -7,6 +7,7 @@ import { Palette } from '../molecules/Palette';
 import { Canvas } from '../organisms/Canvas';
 import { ZoomControls } from '../atoms/ZoomControls';
 import { CopyIcon, PasteIcon, ClearIcon, DownloadIcon, UploadIcon, ImageIcon } from '../atoms/EditorIcons';
+import { CustomColorIcon } from '../atoms/PaletteIcons';
 import { useCanvasStore } from '../../stores/canvaStore';
 import { CanvasHandle } from '../organisms/canvas/types';
 import { TileControls } from '../molecules/TileControls';
@@ -27,6 +28,7 @@ export const EditorPage: React.FC = () => {
 
     const canvasRef = useRef<CanvasHandle>(null);
     const [showExportModal, setShowExportModal] = useState(false);
+    const [showSidebar, setShowSidebar] = useState(false);
 
     const { scale, translateX, translateY, setScale, setTranslateX, setTranslateY, handleZoomIn, handleZoomOut, handleZoomReset } = useZoom();
     const { exportCanvas } = useExport(canvasRef);
@@ -109,52 +111,80 @@ export const EditorPage: React.FC = () => {
             <main className="flex flex-1 overflow-hidden">
                 <aside className="flex-none w-14 bg-[#1a1a1a] border-r border-[#2a2a2a] flex flex-col items-center py-3 gap-1">
                     <Toolbar orientation="vertical" />
+
+                    <button
+                        onClick={() => setShowSidebar((v) => !v)}
+                        className={`
+                            lg:hidden mt-auto flex items-center justify-center
+                            w-11 h-11 rounded-xl transition-all duration-150 cursor-pointer
+                            ${showSidebar
+                                ? 'bg-blue-500/10 text-blue-400 border border-blue-500/50'
+                                : 'text-gray-500 hover:text-gray-200 hover:bg-[#1a1a1a] border border-transparent'
+                            }
+                        `}
+                        title="Palette & Tiles"
+                        aria-label="Toggle palette and tiles"
+                        aria-pressed={showSidebar}
+                    >
+                        <CustomColorIcon className="w-5 h-5" />
+                    </button>
                 </aside>
 
-                <aside className="hidden lg:flex lg:flex-col lg:w-64 bg-[#1a1a1a] border-r border-[#2a2a2a] overflow-y-auto p-4 gap-6">
-                    <div className="flex flex-col gap-3">
-                        <span className="text-[10px] font-semibold tracking-[0.2em] text-[#666] uppercase">Palette</span>
-                        <Palette
-                            colors={paletteColors}
-                            selectedColor={currentColor}
-                            onSelectColor={setCurrentColor}
-                            onAddColor={addColor}
-                            onRemoveColor={removeColor}
-                            onUpdateColor={updateColor}
-                            swatchSize={32}
-                            showCustomPicker={true}
-                        />
-                        <div className="flex gap-2 mt-1">
-                            <button onClick={exportPalette} className="flex-1 px-3 py-1.5 text-xs bg-[#252525] border border-[#333] rounded-md hover:border-[#4a9eff] hover:text-[#4a9eff] text-[#aaa] transition-all">
-                                <DownloadIcon className="w-3.5 h-3.5 inline mr-1.5" />
-                                Export
-                            </button>
-                            <button onClick={handleImportPalette} className="flex-1 px-3 py-1.5 text-xs bg-[#252525] border border-[#333] rounded-md hover:border-[#4a9eff] hover:text-[#4a9eff] text-[#aaa] transition-all">
-                                <UploadIcon className="w-3.5 h-3.5 inline mr-1.5" />
-                                Import
-                            </button>
+                <aside
+                    className={`
+                        flex-none overflow-hidden bg-[#1a1a1a] border-r border-[#2a2a2a]
+                        transition-[width] duration-200 ease-in-out
+                        ${showSidebar ? 'w-64' : 'w-0'}
+                        lg:w-64
+                    `}
+                >
+                    <div className="w-64 h-full flex flex-col">
+                        <div className="flex-1 min-h-0 overflow-y-auto p-4 flex flex-col gap-6">
+                            <div className="flex flex-col gap-3">
+                                <span className="text-[10px] font-semibold tracking-[0.2em] text-[#666] uppercase">Palette</span>
+                                <Palette
+                                    colors={paletteColors}
+                                    selectedColor={currentColor}
+                                    onSelectColor={setCurrentColor}
+                                    onAddColor={addColor}
+                                    onRemoveColor={removeColor}
+                                    onUpdateColor={updateColor}
+                                    swatchSize={32}
+                                    showCustomPicker={true}
+                                />
+                                <div className="flex gap-2 mt-1">
+                                    <button onClick={exportPalette} className="flex-1 px-3 py-1.5 text-xs bg-[#252525] border border-[#333] rounded-md hover:border-[#4a9eff] hover:text-[#4a9eff] text-[#aaa] transition-all">
+                                        <DownloadIcon className="w-3.5 h-3.5 inline mr-1.5" />
+                                        Export
+                                    </button>
+                                    <button onClick={handleImportPalette} className="flex-1 px-3 py-1.5 text-xs bg-[#252525] border border-[#333] rounded-md hover:border-[#4a9eff] hover:text-[#4a9eff] text-[#aaa] transition-all">
+                                        <UploadIcon className="w-3.5 h-3.5 inline mr-1.5" />
+                                        Import
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="w-full h-px bg-[#2a2a2a]" />
+
+                            <div className="flex flex-col gap-3">
+                                <span className="text-[10px] font-semibold tracking-[0.2em] text-[#666] uppercase">Tiles</span>
+                                <TileControls />
+                            </div>
                         </div>
-                    </div>
 
-                    <div className="w-full h-px bg-[#2a2a2a]" />
-
-                    <div className="flex flex-col gap-3">
-                        <span className="text-[10px] font-semibold tracking-[0.2em] text-[#666] uppercase">Tiles</span>
-                        <TileControls />
-                    </div>
-
-                    <div className="mt-auto pt-4 border-t border-[#2a2a2a]">
-                        <div className="flex flex-col gap-2">
-                            <span className="text-[10px] font-semibold tracking-[0.2em] text-[#666] uppercase">Active Color</span>
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-sm border border-[#444] shadow-[inset_0_2px_4px_rgba(0,0,0,0.5)]" style={{ backgroundColor: currentColor }} />
-                                <span className="text-sm text-[#888] font-mono uppercase tracking-wider">{currentColor}</span>
+                        <div className="flex-none p-4 border-t border-[#2a2a2a]">
+                            <div className="flex flex-col gap-2">
+                                <span className="text-[10px] font-semibold tracking-[0.2em] text-[#666] uppercase">Active Color</span>
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-sm border border-[#444] shadow-[inset_0_2px_4px_rgba(0,0,0,0.5)]" style={{ backgroundColor: currentColor }} />
+                                    <span className="text-sm text-[#888] font-mono uppercase tracking-wider">{currentColor}</span>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </aside>
 
-                <div className="flex flex-col flex-1 overflow-hidden">
+                <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
                     <section
                         ref={containerRef}
                         className="flex-1 flex items-center justify-center bg-[#0f0f0f] overflow-hidden relative"

@@ -42,14 +42,14 @@ export default function ExportModal({ isOpen, onClose, onExport }: ExportModalPr
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md">
-            <div className="w-full max-w-md rounded-2xl bg-[#111] border border-[#2a2a2a] shadow-2xl p-6">
-                <div className="flex items-center justify-between mb-5">
-                    <div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md p-4">
+            <div className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-2xl bg-[#111] border border-[#2a2a2a] shadow-2xl p-4 sm:p-6">
+                <div className="flex items-start justify-between gap-3 mb-5">
+                    <div className="min-w-0">
                         <h2 className="text-lg font-semibold text-white">Export</h2>
                         <p className="text-sm text-gray-400">Download your canvas</p>
                     </div>
-                    <button onClick={onClose} className="text-gray-500 hover:text-white transition">
+                    <button onClick={onClose} className="shrink-0 text-gray-500 hover:text-white transition">
                         ✕
                     </button>
                 </div>
@@ -67,7 +67,7 @@ export default function ExportModal({ isOpen, onClose, onExport }: ExportModalPr
 
                 <div className="mb-6">
                     <p className="text-sm text-gray-300 mb-3">Format</p>
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         {formatOptions.map((opt) => (
                             <button
                                 key={opt.value}
@@ -90,7 +90,7 @@ export default function ExportModal({ isOpen, onClose, onExport }: ExportModalPr
                     </div>
                 </div>
 
-                <div className="flex gap-4 mb-6">
+                <div className="flex flex-col sm:flex-row gap-4 mb-6">
                     <div className="flex-1">
                         <p className="text-sm text-gray-300 mb-2">Scale (X)</p>
                         <input
