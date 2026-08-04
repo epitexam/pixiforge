@@ -10,8 +10,8 @@ interface UseMouseEventsProps {
     rect: DOMRect,
   ) => { x: number; y: number } | null;
   handlePixelAction: (x: number, y: number) => void;
+  canSelectPoint: (x: number, y: number) => boolean;
   containerRef: RefObject<HTMLDivElement | null>;
-  selectionRect: Rect | null;
   setSelectionRect: (rect: Rect | null) => void;
   isPointInSelection: (x: number, y: number) => boolean;
   onTranslateXChange: (x: number) => void;
@@ -24,8 +24,8 @@ export const useMouseEvents = ({
   activeTool,
   getPixelIndexFromEvent,
   handlePixelAction,
+  canSelectPoint,
   containerRef,
-  selectionRect,
   setSelectionRect,
   isPointInSelection,
   onTranslateXChange,
@@ -67,6 +67,7 @@ export const useMouseEvents = ({
       }
 
       if (activeTool === "select") {
+        if (!canSelectPoint(indices.x, indices.y)) return;
         setIsSelecting(true);
         setSelectionStart(indices);
         setSelectionEnd(indices);
@@ -75,7 +76,7 @@ export const useMouseEvents = ({
         handlePixelAction(indices.x, indices.y);
       }
     },
-    [activeTool, getPixelIndexFromEvent, handlePixelAction, containerRef],
+    [activeTool, getPixelIndexFromEvent, handlePixelAction, canSelectPoint, containerRef],
   );
 
   const handleMouseMove = useCallback(
@@ -98,7 +99,7 @@ export const useMouseEvents = ({
       if (!indices) return;
 
       if (activeTool === "select") {
-        if (isSelecting && selectionStart) {
+        if (isSelecting && selectionStart && canSelectPoint(indices.x, indices.y)) {
           setSelectionEnd(indices);
         }
       } else if (isDrawing) {
@@ -118,6 +119,7 @@ export const useMouseEvents = ({
       isDrawing,
       getPixelIndexFromEvent,
       handlePixelAction,
+      canSelectPoint,
       containerRef,
     ],
   );

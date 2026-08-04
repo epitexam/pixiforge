@@ -7,6 +7,14 @@ const DEFAULT_HEIGHT = 32;
 const DEFAULT_TILE_WIDTH = 16;
 const DEFAULT_TILE_HEIGHT = 16;
 
+export interface TileDefinition {
+    id: string;
+    name: string;
+    width: number;
+    height: number;
+    pixels: Color[];
+}
+
 const createEmptyPixels = (width: number, height: number): Color[] => {
     return new Array(width * height).fill(DEFAULT_COLOR);
 };
@@ -19,6 +27,8 @@ interface CanvasState {
     tileHeight: number;
     selectedTile: { col: number; row: number } | null;
     tileModeEnabled: boolean;
+    tiles: TileDefinition[];
+    activeLibraryTileId: string | null;
 }
 
 interface CanvasStore extends CanvasState {
@@ -30,6 +40,12 @@ interface CanvasStore extends CanvasState {
     setTileSize: (width: number, height: number) => void;
     selectTile: (col: number, row: number) => void;
     setTileMode: (enabled: boolean) => void;
+    captureTile: (name?: string) => TileDefinition | null;
+    removeTile: (id: string) => void;
+    renameTile: (id: string, name: string) => void;
+    setActiveLibraryTile: (id: string | null) => void;
+    getActiveLibraryTile: () => TileDefinition | null;
+    loadTileProject: (tileWidth: number, tileHeight: number, tiles: TileDefinition[]) => void;
 }
 
 export const useCanvasStore = create<CanvasStore>((set, get) => ({
@@ -40,6 +56,8 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
     tileHeight: DEFAULT_TILE_HEIGHT,
     selectedTile: null,
     tileModeEnabled: false,
+    tiles: [],
+    activeLibraryTileId: null,
 
     setPixel: (x, y, color) => set((state) => {
         if (x < 0 || x >= state.width || y < 0 || y >= state.height) return state;
@@ -94,7 +112,7 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
         tileModeEnabled: false,
     }),
 
-    setTileSize: (width, height) => set((state) => {
+    setTileSize: (width, height) => set(() => {
         return { tileWidth: width, tileHeight: height, selectedTile: null, tileModeEnabled: false };
     }),
 
@@ -105,5 +123,57 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
             return { tileModeEnabled: true, selectedTile: { col: 0, row: 0 } };
         }
         return { tileModeEnabled: enabled };
+    }),
+
+    captureTile: (name) => {
+        const state = get();
+        if (!state.selectedTile) return null;
+        const { col, row } = state.selectedTile;
+        const startX = col * state.tileWidth;
+        const startY = row * state.tileHeight;
+        if (startX >= state.width || startY >= state.height) return null;
+
+        const width = Math.min(state.tileWidth, state.width - startX);
+        const height = Math.min(state.tileHeight, state.height - startY);
+        const pixels: Color[] = [];
+        for (let y = 0; y < height; y++) {
+            for (let x = 0; x < width; x++) {
+                pixels.push(state.pixels[(startY + y) * state.width + startX + x]);
+            }
+        }
+        const tile: TileDefinition = {
+            id: crypto.randomUUID(),
+            name: name?.trim() || `Tile ${state.tiles.length + 1}`,
+            width,
+            height,
+            pixels,
+        };
+        set((current) => ({ tiles: [...current.tiles, tile], activeLibraryTileId: tile.id }));
+        return tile;
+    },
+
+    removeTile: (id) => set((state) => ({
+        tiles: state.tiles.filter((tile) => tile.id !== id),
+        activeLibraryTileId: state.activeLibraryTileId === id ? null : state.activeLibraryTileId,
+    })),
+
+    renameTile: (id, name) => set((state) => ({
+        tiles: state.tiles.map((tile) => tile.id === id ? { ...tile, name: name.trim() || tile.name } : tile),
+    })),
+
+    setActiveLibraryTile: (id) => set({ activeLibraryTileId: id }),
+
+    getActiveLibraryTile: () => {
+        const state = get();
+        return state.tiles.find((tile) => tile.id === state.activeLibraryTileId) ?? null;
+    },
+
+    loadTileProject: (tileWidth, tileHeight, tiles) => set({
+        tileWidth: Number.isInteger(tileWidth) && tileWidth > 0 ? tileWidth : DEFAULT_TILE_WIDTH,
+        tileHeight: Number.isInteger(tileHeight) && tileHeight > 0 ? tileHeight : DEFAULT_TILE_HEIGHT,
+        tiles: Array.isArray(tiles) ? tiles : [],
+        activeLibraryTileId: null,
+        selectedTile: null,
+        tileModeEnabled: false,
     }),
 }));

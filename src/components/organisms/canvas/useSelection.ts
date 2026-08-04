@@ -14,7 +14,8 @@ export const useSelection = (
   effectiveWidth: number,
   effectiveHeight: number,
   setPixel: (x: number, y: number, color: Color) => void,
-  deps: UseSelectionDeps
+  deps: UseSelectionDeps,
+  canEditPixel: (x: number, y: number) => boolean = () => true,
 ) => {
   const { mousePosRef, getPixelIndex } = deps;
 
@@ -70,14 +71,14 @@ export const useSelection = (
         for (let dx = 0; dx < width; dx++) {
           const px = pasteX + dx;
           const py = pasteY + dy;
-          if (px < effectiveWidth && py < effectiveHeight) {
+          if (px >= 0 && py >= 0 && px < effectiveWidth && py < effectiveHeight && canEditPixel(px, py)) {
             setPixel(px, py, copiedPixels[dy][dx]);
           }
         }
       }
       toast.success(`Pasted at (${pasteX}, ${pasteY})`);
     },
-    [copiedPixels, setPixel, effectiveWidth, effectiveHeight]
+    [copiedPixels, setPixel, effectiveWidth, effectiveHeight, canEditPixel]
   );
 
   const pasteAtMouse = useCallback(() => {

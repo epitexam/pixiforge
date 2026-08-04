@@ -7,6 +7,7 @@ interface UseKeyboardSelectionClearProps {
     setPixel: (x: number, y: number, color: string) => void;
     effectiveWidth: number;
     effectiveHeight: number;
+    canEditPixel?: (x: number, y: number) => boolean;
 }
 
 export const useKeyboardSelectionClear = ({
@@ -15,6 +16,7 @@ export const useKeyboardSelectionClear = ({
     setPixel,
     effectiveWidth,
     effectiveHeight,
+    canEditPixel = () => true,
 }: UseKeyboardSelectionClearProps) => {
     useEffect(() => {
         const handleKeyDown = (e: globalThis.KeyboardEvent) => {
@@ -34,7 +36,7 @@ export const useKeyboardSelectionClear = ({
                         for (let dx = 0; dx < width; dx++) {
                             const px = x + dx;
                             const py = y + dy;
-                            if (px >= 0 && px < effectiveWidth && py >= 0 && py < effectiveHeight) {
+                            if (px >= 0 && px < effectiveWidth && py >= 0 && py < effectiveHeight && canEditPixel(px, py)) {
                                 setPixel(px, py, DEFAULT_COLOR);
                             }
                         }
@@ -44,5 +46,5 @@ export const useKeyboardSelectionClear = ({
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [selectionRect, setSelectionRect, setPixel, effectiveWidth, effectiveHeight]);
+    }, [selectionRect, setSelectionRect, setPixel, effectiveWidth, effectiveHeight, canEditPixel]);
 };

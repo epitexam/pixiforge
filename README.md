@@ -13,6 +13,7 @@ PixiForge is a cross‑platform desktop application that combines a pixel art ed
 - [Building for Production](#building-for-production)
 - [Usage](#usage)
   - [Manual Pixel Editing](#manual-pixel-editing)
+  - [Tile Workflow](#tile-workflow)
   - [PixiScript: Code‑Driven Pixel Art](#pixiscript-code-driven-pixel-art)
   - [Export Options](#export-options)
 - [PixiScript Language Reference](#pixiscript-language-reference)
@@ -30,7 +31,7 @@ The core idea is simple: every time you modify the code, the output is automatic
 
 - **Dual‑mode editing** – Switch between manual pixel tools and code‑driven generation.
 - **PixiScript live coding** – Built‑in code editor with syntax highlighting for a custom DSL. Changes are evaluated in a secure sandbox and instantly update the canvas.
-- **Tile‑based canvas** – Work with tiles of configurable size (e.g., 8×8, 16×16). The canvas can be extended dynamically.
+- **Tile workflow** – Configure a tile grid, lock editing to one selected tile area, capture reusable tiles, stamp them onto the canvas, and export the library as a PNG spritesheet.
 - **Layer support** – Multiple layers with opacity and blending modes.
 - **Color palette** – Customizable color palette with common pixel art formats.
 - **Export options** – Save your work as PNG images or spritesheets.
@@ -122,6 +123,13 @@ For cross‑platform builds, refer to the [Tauri GitHub Actions](https://tauri.a
 - Choose colors from the palette.
 - Draw directly on the canvas. Zoom and pan are supported via mouse wheel and drag.
 - Layers can be added, removed, reordered, and toggled.
+
+### Tile Workflow
+
+1. Set the tile width and height in the **Tiles** panel.
+2. Press `T` and click a canvas area to select it. Use **Lock** to confine drawing, erasing, picking, selection, pasting, deletion, and tile placement to that area.
+3. Capture the selected area into the tile library. Clicking a library tile activates the stamp tool; click the canvas to place it.
+4. Use **Export spritesheet** to download all captured tiles as a PNG sheet.
 
 ### PixiScript: Code‑Driven Pixel Art
 

@@ -11,7 +11,7 @@ export interface MenuBarProps {
 }
 
 export const MenuBar: React.FC<MenuBarProps> = ({ className = '', onExport }) => {
-    const { clearCanvas, setAllPixels } = useCanvasStore();
+    const { clearCanvas, setAllPixels, loadTileProject } = useCanvasStore();
 
     const handleNew = () => {
         clearCanvas();
@@ -46,6 +46,7 @@ export const MenuBar: React.FC<MenuBarProps> = ({ className = '', onExport }) =>
                 throw new Error('Invalid file format');
             }
             setAllPixels(pixels2D);
+            loadTileProject(data.tileWidth, data.tileHeight, data.tiles);
             toast.success('File opened successfully');
         } catch (error) {
             toast.error(`Failed to open file: ${error}`);
@@ -59,7 +60,7 @@ export const MenuBar: React.FC<MenuBarProps> = ({ className = '', onExport }) =>
             return;
         }
         try {
-            const { width, height, pixels: pixels1D } = useCanvasStore.getState();
+            const { width, height, pixels: pixels1D, tileWidth, tileHeight, tiles } = useCanvasStore.getState();
             const pixels2D: string[][] = [];
             for (let y = 0; y < height; y++) {
                 const row: string[] = [];
@@ -68,7 +69,7 @@ export const MenuBar: React.FC<MenuBarProps> = ({ className = '', onExport }) =>
                 }
                 pixels2D.push(row);
             }
-            const data = { version: '1.0', width, height, pixels: pixels2D };
+            const data = { version: '1.1', width, height, pixels: pixels2D, tileWidth, tileHeight, tiles };
             const jsonContent = JSON.stringify(data, null, 2);
             const savedPath = await invoke<string>('save_file', {
                 content: jsonContent,

@@ -33,7 +33,7 @@ export const EditorPage: React.FC = () => {
     const [showActiveColorModal, setShowActiveColorModal] = useState(false);
 
     const { scale, translateX, translateY, setScale, setTranslateX, setTranslateY, handleZoomIn, handleZoomOut, handleZoomReset } = useZoom();
-    const { exportCanvas } = useExport(canvasRef);
+    const { exportCanvas } = useExport();
     const { handleCopy, handlePaste } = useClipboard(canvasRef);
     const { exportPalette, handleImportPalette } = usePaletteActions();
 

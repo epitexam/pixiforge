@@ -46,7 +46,7 @@ export const Palette: React.FC<PaletteProps> = ({
                 style={{ scrollbarWidth: 'thin' }}
             >
 
-                <div className="grid grid-cols-[repeat(auto-fill,minmax(2rem,1fr))] gap-2 justify-items-center">
+                <div className="grid gap-2 justify-items-center" style={{ gridTemplateColumns: `repeat(auto-fill, minmax(${swatchSize}px, 1fr))` }}>
                     {colors.map((color, index) => (
                         <div
                             key={`${color}-${index}`}

@@ -12,7 +12,7 @@ const TOOLS: { id: Tool; label: string; icon: React.FC<{ className?: string }>; 
     { id: 'eraser', label: 'Eraser', icon: EraserIcon, shortcut: 'E' },
     { id: 'picker', label: 'Picker', icon: PickerIcon, shortcut: 'I' },
     { id: 'select', label: 'Select', icon: SelectIcon, shortcut: 'S' },
-    { id: 'tileSelect', label: 'Tile Select', icon: GridIcon, shortcut: 'T' },
+    { id: 'tileSelect', label: 'Select Tile Area', icon: GridIcon, shortcut: 'T' },
 ];
 
 export const Toolbar: React.FC<ToolbarProps> = ({

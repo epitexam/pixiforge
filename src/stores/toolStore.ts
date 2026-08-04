@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { Color } from '../types';
 
-export type Tool = 'pencil' | 'eraser' | 'picker' | 'select' | 'tileSelect';
+export type Tool = 'pencil' | 'eraser' | 'picker' | 'select' | 'tileSelect' | 'tileStamp';
 
 interface ToolStore {
     activeTool: Tool;

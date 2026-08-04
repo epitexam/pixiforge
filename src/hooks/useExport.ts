@@ -1,7 +1,6 @@
 import { useCallback } from 'react';
 import { toast } from 'sonner';
 import { useCanvasStore, DEFAULT_COLOR } from '../stores/canvaStore';
-import { CanvasHandle } from '../components/organisms/canvas/types';
 
 export interface ExportOptions {
     format: 'png' | 'jpeg' | 'webp';
@@ -12,7 +11,7 @@ export interface ExportOptions {
     transparent?: boolean;
 }
 
-export const useExport = (canvasRef: React.RefObject<CanvasHandle | null>) => {
+export const useExport = () => {
     const exportCanvas = useCallback(async (options: ExportOptions) => {
         const {
             format,

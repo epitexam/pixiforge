@@ -62,6 +62,7 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(
       tileModeEnabled,
       selectTile,
       setTileMode,
+      getActiveLibraryTile,
     } = useCanvasStore();
     const { activeTool, currentColor, setCurrentColor } = useToolStore();
 
@@ -132,7 +133,8 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(
       {
         mousePosRef: lastMousePosRef,
         getPixelIndex,
-      }
+      },
+      checkTileBounds,
     );
 
     useKeyboardSelectionClear({
@@ -141,6 +143,7 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(
       setPixel,
       effectiveWidth,
       effectiveHeight,
+      canEditPixel: checkTileBounds,
     });
 
     useCanvasRendering({
@@ -161,7 +164,7 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(
         if (tileModeEnabled && selectedTile) {
           const inside = checkTileBounds(x, y);
           if (!inside) {
-            toast.warning("You can only draw inside the selected tile", {
+            toast.warning("This action is outside the locked tile area", {
               duration: 1500,
             });
             return;
@@ -200,8 +203,8 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(
       activeTool,
       getPixelIndexFromEvent,
       handlePixelAction,
+      canSelectPoint: checkTileBounds,
       containerRef,
-      selectionRect,
       setSelectionRect,
       isPointInSelection,
       onTranslateXChange: setTranslateX,
@@ -311,7 +314,7 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(
             color: "#ccc",
           }}
         >
-          <span style={{ color: "#4a9eff" }}>Tile mode</span>
+          <span style={{ color: "#4a9eff" }}>Locked tile area</span>
           <span>
             ({selectedTile.col}, {selectedTile.row})
           </span>
@@ -341,6 +344,7 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(
         case "select":
         case "picker":
         case "tileSelect":
+        case "tileStamp":
           return "crosshair";
         default:
           return "default";
@@ -349,7 +353,9 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(
 
     const customHandleMouseDown = useCallback(
       (e: React.MouseEvent) => {
+        if ((e.target as HTMLElement).closest("button")) return;
         if (activeTool === "tileSelect") {
+          if (e.button !== 0) return;
           const rect = containerRef.current?.getBoundingClientRect();
           if (rect) {
             const indices = getPixelIndexFromEvent(e.clientX, e.clientY, rect);
@@ -363,9 +369,32 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(
           }
           return;
         }
+        if (activeTool === "tileStamp") {
+          if (e.button !== 0) return;
+          const rect = containerRef.current?.getBoundingClientRect();
+          const tile = getActiveLibraryTile();
+          if (!rect || !tile) {
+            toast.error("Choose a tile from the library before placing it.");
+            return;
+          }
+          const indices = getPixelIndexFromEvent(e.clientX, e.clientY, rect);
+          if (!indices) return;
+          let placedPixels = 0;
+          for (let y = 0; y < tile.height; y++) {
+            for (let x = 0; x < tile.width; x++) {
+              const targetX = indices.x + x;
+              const targetY = indices.y + y;
+              if (targetX >= effectiveWidth || targetY >= effectiveHeight || !checkTileBounds(targetX, targetY)) continue;
+              setPixel(targetX, targetY, tile.pixels[y * tile.width + x]);
+              placedPixels++;
+            }
+          }
+          if (!placedPixels) toast.warning("This placement is outside the locked tile area.");
+          return;
+        }
         handleMouseDown(e);
       },
-      [activeTool, getPixelIndexFromEvent, tileWidth, tileHeight, selectTile, setTileMode, handleMouseDown],
+      [activeTool, getPixelIndexFromEvent, tileWidth, tileHeight, selectTile, setTileMode, handleMouseDown, getActiveLibraryTile, effectiveWidth, effectiveHeight, checkTileBounds, setPixel],
     );
 
     const containerStyle = useMemo(() => ({
