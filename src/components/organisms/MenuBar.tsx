@@ -2,13 +2,15 @@ import React from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { toast } from 'sonner';
 import { NewFileIcon, OpenFileIcon, SaveFileIcon } from '../atoms/MenuIcons';
+import { ImageIcon } from '../atoms/EditorIcons';
 import { useCanvasStore } from '../../stores/canvaStore';
 
 export interface MenuBarProps {
     className?: string;
+    onExport?: () => void;
 }
 
-export const MenuBar: React.FC<MenuBarProps> = ({ className = '' }) => {
+export const MenuBar: React.FC<MenuBarProps> = ({ className = '', onExport }) => {
     const { clearCanvas, setAllPixels } = useCanvasStore();
 
     const handleNew = () => {
@@ -79,42 +81,40 @@ export const MenuBar: React.FC<MenuBarProps> = ({ className = '' }) => {
         }
     };
 
-    return (
-        <nav className={`flex items-stretch h-12 ${className}`}>
-            <div className="flex items-center px-2 sm:px-4 border-r border-[#2a2a2a] shrink-0">
-                <span className="text-xs font-bold tracking-widest text-blue-500 uppercase whitespace-nowrap">
-                    PixiForge
-                </span>
-            </div>
 
-            <div className="flex items-stretch overflow-x-auto px-2 gap-1">
-                <button
-                    onClick={handleNew}
-                    className="flex items-center gap-2 px-2.5 sm:px-4 text-sm text-gray-400 hover:text-white hover:bg-[#1a1a1a] rounded-lg transition-colors duration-100 whitespace-nowrap my-auto h-9 shrink-0"
-                    title="New (Ctrl+N)"
-                >
-                    <NewFileIcon className="w-4 h-4" />
-                    <span className="hidden sm:inline">New</span>
-                </button>
-                
-                <button
-                    onClick={handleOpen}
-                    className="flex items-center gap-2 px-2.5 sm:px-4 text-sm text-gray-400 hover:text-white hover:bg-[#1a1a1a] rounded-lg transition-colors duration-100 whitespace-nowrap my-auto h-9 shrink-0"
-                    title="Open (Ctrl+O)"
-                >
-                    <OpenFileIcon className="w-4 h-4" />
-                    <span className="hidden sm:inline">Open</span>
-                </button>
-                
-                <button
-                    onClick={handleSave}
-                    className="flex items-center gap-2 px-2.5 sm:px-4 text-sm text-gray-400 hover:text-white hover:bg-[#1a1a1a] rounded-lg transition-colors duration-100 whitespace-nowrap my-auto h-9 shrink-0"
-                    title="Save (Ctrl+S)"
-                >
-                    <SaveFileIcon className="w-4 h-4" />
-                    <span className="hidden sm:inline">Save</span>
-                </button>
-            </div>
+    const btnClass = "flex items-center gap-2 px-3 sm:px-4 text-sm text-gray-400 hover:text-white hover:bg-[#222] rounded-lg transition-colors duration-100 whitespace-nowrap h-9 shrink-0 focus:outline-none focus:ring-2 focus:ring-blue-500/50";
+
+    return (
+        <nav className={`flex items-center px-2 gap-1 ${className}`}>
+            <button onClick={handleNew} className={btnClass} title="New (Ctrl+N)">
+                <NewFileIcon className="w-4 h-4" />
+                <span className="hidden sm:inline">New</span>
+            </button>
+
+            <button onClick={handleOpen} className={btnClass} title="Open (Ctrl+O)">
+                <OpenFileIcon className="w-4 h-4" />
+                <span className="hidden sm:inline">Open</span>
+            </button>
+
+            <button onClick={handleSave} className={btnClass} title="Save (Ctrl+S)">
+                <SaveFileIcon className="w-4 h-4" />
+                <span className="hidden sm:inline">Save</span>
+            </button>
+
+            {onExport && (
+                <>
+
+                    <div className="w-px h-6 bg-[#2a2a2a] mx-1 sm:mx-2 shrink-0" />
+                    <button
+                        onClick={onExport}
+                        className={`${btnClass} text-blue-400 hover:text-blue-300 hover:bg-blue-500/10`}
+                        title="Export canvas"
+                    >
+                        <ImageIcon className="w-4 h-4" />
+                        <span className="hidden sm:inline">Export</span>
+                    </button>
+                </>
+            )}
         </nav>
     );
 };

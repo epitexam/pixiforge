@@ -6,7 +6,7 @@ import { Toolbar } from '../organisms/Toolbar';
 import { Palette } from '../molecules/Palette';
 import { Canvas } from '../organisms/Canvas';
 import { ZoomControls } from '../atoms/ZoomControls';
-import { CopyIcon, PasteIcon, ClearIcon, DownloadIcon, UploadIcon, ImageIcon } from '../atoms/EditorIcons';
+import { CopyIcon, PasteIcon, ClearIcon, DownloadIcon, UploadIcon } from '../atoms/EditorIcons';
 import { CustomColorIcon } from '../atoms/PaletteIcons';
 import { useCanvasStore } from '../../stores/canvaStore';
 import { CanvasHandle } from '../organisms/canvas/types';
@@ -40,12 +40,12 @@ export const EditorPage: React.FC = () => {
     const containerRef = useRef<HTMLDivElement>(null);
     const [cellSize, setCellSize] = useState(24);
 
-    // Raccourci clavier
+
     useEffect(() => {
         const handleGlobalShortcut = (e: KeyboardEvent) => {
             if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'A') {
                 e.preventDefault();
-                setShowActiveColorModal(true);
+                setShowActiveColorModal(v => !v);
             }
         };
         window.addEventListener('keydown', handleGlobalShortcut);
@@ -114,8 +114,8 @@ export const EditorPage: React.FC = () => {
                 isColorInPalette={(color) => paletteColors.includes(color)}
             />
 
-            <header className="flex-none h-12 bg-[#1a1a1a] border-b border-[#2a2a2a] flex items-stretch z-20">
-                <MenuBar />
+            <header className="flex-none h-12 bg-[#1a1a1a] border-b border-[#2a2a2a] flex items-center z-20 px-2">
+                <MenuBar onExport={handleExport} />
             </header>
 
             <main className="relative flex flex-1 overflow-hidden">
@@ -169,13 +169,25 @@ export const EditorPage: React.FC = () => {
                     </div>
 
                     <div className="flex-none p-4 border-t border-[#2a2a2a]">
-                        <button onClick={() => setShowActiveColorModal(true)} className="w-full flex flex-col gap-2 text-left group cursor-pointer">
-                            <span className="text-[10px] font-semibold tracking-[0.2em] text-gray-600 uppercase group-hover:text-gray-400 transition-colors">Active Color</span>
+
+                        <button
+                            onClick={() => setShowActiveColorModal(v => !v)}
+                            className={`w-full flex flex-col gap-2 text-left group cursor-pointer transition-all ${showActiveColorModal ? 'bg-blue-500/5 rounded-lg p-2 -m-2' : ''}`}
+                        >
+                            <span className={`text-[10px] font-semibold tracking-[0.2em] uppercase transition-colors ${showActiveColorModal ? 'text-blue-400' : 'text-gray-600 group-hover:text-gray-400'}`}>
+                                Active Color
+                            </span>
                             <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-lg border border-[#2a2a2a] group-hover:border-blue-500 transition-colors shadow-inner" style={{ backgroundColor: currentColor }} />
+
+                                <div
+                                    className={`w-10 h-10 rounded-lg border transition-colors shadow-inner ${showActiveColorModal ? 'border-blue-500 ring-2 ring-blue-500/30' : 'border-[#2a2a2a] group-hover:border-blue-500'}`}
+                                    style={{ backgroundColor: currentColor }}
+                                />
                                 <div className="flex flex-col">
                                     <span className="text-sm text-gray-300 font-mono uppercase tracking-wider">{currentColor}</span>
-                                    <span className="text-[10px] text-gray-500 group-hover:text-blue-400 transition-colors">Click to edit</span>
+                                    <span className={`text-[10px] transition-colors ${showActiveColorModal ? 'text-blue-400' : 'text-gray-500 group-hover:text-blue-400'}`}>
+                                        {showActiveColorModal ? 'Click to close' : 'Click to edit'}
+                                    </span>
                                 </div>
                             </div>
                         </button>
@@ -201,16 +213,16 @@ export const EditorPage: React.FC = () => {
 
                     <footer className="flex-none py-3 px-4 bg-[#1a1a1a] border-t border-[#2a2a2a] flex flex-wrap items-center justify-center gap-3 z-10">
                         <ZoomControls zoomLevel={scale} onZoomIn={handleZoomIn} onZoomOut={handleZoomOut} onZoomReset={handleZoomReset} />
+
                         <div className="w-px h-6 bg-[#2a2a2a] hidden sm:block" />
+
                         <div className="flex items-center gap-1.5">
                             <button onClick={handleCopy} className="w-8 h-8 flex items-center justify-center bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg hover:border-blue-500 hover:text-blue-400 text-gray-400 transition-all" title="Copy (Ctrl+C)"><CopyIcon className="w-4 h-4" /></button>
                             <button onClick={handlePaste} className="w-8 h-8 flex items-center justify-center bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg hover:border-blue-500 hover:text-blue-400 text-gray-400 transition-all" title="Paste (Ctrl+V)"><PasteIcon className="w-4 h-4" /></button>
                         </div>
+
                         <div className="w-px h-6 bg-[#2a2a2a] hidden sm:block" />
-                        <div className="flex items-center gap-1.5">
-                            <button onClick={handleExport} className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium tracking-wide text-gray-400 hover:text-blue-400 border border-[#2a2a2a] hover:border-blue-500 rounded-lg transition-all bg-[#1a1a1a] hover:bg-[#222]" title="Export"><ImageIcon className="w-4 h-4" /><span className="hidden sm:inline">Export</span></button>
-                        </div>
-                        <div className="w-px h-6 bg-[#2a2a2a] hidden sm:block" />
+
                         <button onClick={handleClearCanvas} className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium tracking-wide text-gray-400 hover:text-red-400 border border-[#2a2a2a] hover:border-red-500/50 rounded-lg transition-all bg-[#1a1a1a] hover:bg-[#222]" title="Clear"><ClearIcon className="w-4 h-4" /><span className="hidden sm:inline">Clear</span></button>
                     </footer>
                 </div>
