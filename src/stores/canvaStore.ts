@@ -27,8 +27,8 @@ interface CanvasSnapshot {
     activeLibraryTileId: string | null;
 }
 
-const createEmptyPixels = (width: number, height: number): Color[] => {
-    return new Array(width * height).fill(DEFAULT_COLOR);
+const createEmptyPixels = (width: number, height: number, fill: Color = DEFAULT_COLOR): Color[] => {
+    return new Array(width * height).fill(fill);
 };
 
 const MAX_HISTORY = 100;
@@ -76,6 +76,8 @@ interface CanvasStore extends CanvasState {
     setActiveLibraryTile: (id: string | null) => void;
     getActiveLibraryTile: () => TileDefinition | null;
     loadTileProject: (tileWidth: number, tileHeight: number, tiles: TileDefinition[]) => void;
+    createNewProject: (options: { width: number; height: number; tileWidth: number; tileHeight: number; backgroundColor: Color }) => void;
+    fillArea: (x: number, y: number, color: Color, canEditPixel?: (x: number, y: number) => boolean) => void;
     beginAction: () => void;
     commitAction: () => void;
     undo: () => void;
@@ -284,6 +286,92 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
         pendingActionSnapshot: null,
         pendingActionDirty: false,
     })),
+
+    createNewProject: ({ width, height, tileWidth, tileHeight, backgroundColor }) => set((state) => ({
+        width: Number.isInteger(width) && width > 0 ? width : DEFAULT_WIDTH,
+        height: Number.isInteger(height) && height > 0 ? height : DEFAULT_HEIGHT,
+        pixels: createEmptyPixels(width, height, backgroundColor),
+        tileWidth: Number.isInteger(tileWidth) && tileWidth > 0 ? tileWidth : DEFAULT_TILE_WIDTH,
+        tileHeight: Number.isInteger(tileHeight) && tileHeight > 0 ? tileHeight : DEFAULT_TILE_HEIGHT,
+        tiles: [],
+        activeLibraryTileId: null,
+        selectedTile: null,
+        tileModeEnabled: false,
+        past: [...state.past, createCanvasSnapshot(state)].slice(-MAX_HISTORY),
+        future: [],
+        pendingActionSnapshot: null,
+        pendingActionDirty: false,
+    })),
+
+    fillArea: (x, y, color, canEditPixel) => set((state) => {
+        if (x < 0 || x >= state.width || y < 0 || y >= state.height) return state;
+        const startIndex = y * state.width + x;
+        const targetColor = state.pixels[startIndex];
+        if (targetColor === color) return state;
+
+        const newPixels = [...state.pixels];
+        const visited = new Uint8Array(state.width * state.height);
+        const stack: number[] = [startIndex];
+        visited[startIndex] = 1;
+
+        let changed = 0;
+        while (stack.length) {
+            const index = stack.pop()!;
+            const pixelColor = newPixels[index];
+            if (pixelColor !== targetColor) continue;
+
+            const pixelX = index % state.width;
+            const pixelY = Math.floor(index / state.width);
+            if (canEditPixel && !canEditPixel(pixelX, pixelY)) continue;
+
+            newPixels[index] = color;
+            changed += 1;
+
+            if (pixelX > 0) {
+                const leftIndex = index - 1;
+                if (!visited[leftIndex] && newPixels[leftIndex] === targetColor) {
+                    visited[leftIndex] = 1;
+                    stack.push(leftIndex);
+                }
+            }
+            if (pixelX < state.width - 1) {
+                const rightIndex = index + 1;
+                if (!visited[rightIndex] && newPixels[rightIndex] === targetColor) {
+                    visited[rightIndex] = 1;
+                    stack.push(rightIndex);
+                }
+            }
+            if (pixelY > 0) {
+                const upIndex = index - state.width;
+                if (!visited[upIndex] && newPixels[upIndex] === targetColor) {
+                    visited[upIndex] = 1;
+                    stack.push(upIndex);
+                }
+            }
+            if (pixelY < state.height - 1) {
+                const downIndex = index + state.width;
+                if (!visited[downIndex] && newPixels[downIndex] === targetColor) {
+                    visited[downIndex] = 1;
+                    stack.push(downIndex);
+                }
+            }
+        }
+
+        if (!changed) return state;
+
+        if (state.pendingActionSnapshot) {
+            return {
+                pixels: newPixels,
+                pendingActionDirty: true,
+            };
+        }
+
+        return {
+            pixels: newPixels,
+            past: [...state.past, createCanvasSnapshot(state)].slice(-MAX_HISTORY),
+            future: [],
+        };
+    }),
 
     beginAction: () => set((state) => {
         if (state.pendingActionSnapshot) return state;

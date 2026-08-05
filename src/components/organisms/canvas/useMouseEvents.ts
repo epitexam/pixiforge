@@ -78,7 +78,11 @@ export const useMouseEvents = ({
       } else {
         setIsDrawing(true);
         onActionStart?.();
-        handlePixelAction(indices.x, indices.y);
+        if (activeTool !== "smartFill") {
+          handlePixelAction(indices.x, indices.y);
+        } else {
+          handlePixelAction(indices.x, indices.y);
+        }
       }
     },
     [activeTool, getPixelIndexFromEvent, handlePixelAction, canSelectPoint, containerRef, onActionStart],
@@ -107,7 +111,7 @@ export const useMouseEvents = ({
         if (isSelecting && selectionStart && canSelectPoint(indices.x, indices.y)) {
           setSelectionEnd(indices);
         }
-      } else if (isDrawing) {
+      } else if (isDrawing && activeTool !== "smartFill") {
         handlePixelAction(indices.x, indices.y);
       }
     },

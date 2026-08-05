@@ -56,6 +56,7 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(
       pixels,
       setPixel,
       getPixel,
+      fillArea,
       tileWidth,
       beginAction,
       commitAction,
@@ -182,6 +183,14 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(
           case "eraser":
             setPixel(x, y, DEFAULT_COLOR);
             break;
+          case "smartFill":
+            fillArea(x, y, currentColor, (px, py) => {
+              if (tileModeEnabled && selectedTile) {
+                return checkTileBounds(px, py);
+              }
+              return true;
+            });
+            break;
           case "picker": {
             const color = getPixel(x, y);
             if (color) setCurrentColor(color);
@@ -191,7 +200,7 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(
             break;
         }
       },
-      [activeTool, currentColor, setPixel, getPixel, setCurrentColor, tileModeEnabled, selectedTile, checkTileBounds],
+      [activeTool, currentColor, setPixel, getPixel, fillArea, setCurrentColor, tileModeEnabled, selectedTile, checkTileBounds],
     );
 
     const {

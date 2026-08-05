@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { toast } from 'sonner';
 import { NewFileIcon, OpenFileIcon, SaveFileIcon } from '../atoms/MenuIcons';
 import { ImageIcon } from '../atoms/EditorIcons';
 import { useCanvasStore } from '../../stores/canvaStore';
+import NewProjectModal, { NewProjectOptions } from '../molecules/NewProjectModal';
 
 export interface MenuBarProps {
     className?: string;
@@ -11,11 +12,16 @@ export interface MenuBarProps {
 }
 
 export const MenuBar: React.FC<MenuBarProps> = ({ className = '', onExport }) => {
-    const { clearCanvas, setAllPixels, loadTileProject } = useCanvasStore();
+    const { width, height, tileWidth, tileHeight, setAllPixels, loadTileProject, createNewProject } = useCanvasStore();
+    const [showNewProjectModal, setShowNewProjectModal] = useState(false);
 
     const handleNew = () => {
-        clearCanvas();
-        toast.success('New canvas created');
+        setShowNewProjectModal(true);
+    };
+
+    const handleCreateNewProject = (options: NewProjectOptions) => {
+        createNewProject(options);
+        toast.success('New project created');
     };
 
     const handleOpen = async () => {
@@ -86,7 +92,18 @@ export const MenuBar: React.FC<MenuBarProps> = ({ className = '', onExport }) =>
     const btnClass = "flex items-center gap-2 px-3 sm:px-4 text-sm text-gray-400 hover:text-white hover:bg-[#222] rounded-lg transition-colors duration-100 whitespace-nowrap h-9 shrink-0 focus:outline-none focus:ring-2 focus:ring-blue-500/50";
 
     return (
-        <nav className={`flex items-center px-2 gap-1 ${className}`}>
+        <>
+            <NewProjectModal
+                isOpen={showNewProjectModal}
+                onClose={() => setShowNewProjectModal(false)}
+                onCreate={handleCreateNewProject}
+                initialWidth={width}
+                initialHeight={height}
+                initialTileWidth={tileWidth}
+                initialTileHeight={tileHeight}
+            />
+
+            <nav className={`flex items-center px-2 gap-1 ${className}`}>
             <button onClick={handleNew} className={btnClass} title="New (Ctrl+N)">
                 <NewFileIcon className="w-4 h-4" />
                 <span className="hidden sm:inline">New</span>
@@ -117,6 +134,7 @@ export const MenuBar: React.FC<MenuBarProps> = ({ className = '', onExport }) =>
                 </>
             )}
         </nav>
+        </>
     );
 };
 

@@ -37,3 +37,14 @@ export const GridIcon: React.FC<{ className?: string }> = ({ className }) => (
         <line x1="15" y1="3" x2="15" y2="21" />
     </svg>
 );
+
+export const FillIcon: React.FC<{ className?: string }> = ({ className }) => (
+    <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M4 13.5 13.3 4.2a2 2 0 0 1 2.8 2.8L8.5 15.5" />
+        <path d="m6 15 2 2" />
+        <path d="M13.5 20.5 20 14" />
+        <path d="m15 16 6-6" />
+        <path d="M4 13.5 7 16.5" />
+        <path d="M8.5 15.5 11 18" />
+    </svg>
+);
