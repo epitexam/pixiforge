@@ -15,6 +15,13 @@ export interface TileDefinition {
     pixels: Color[];
 }
 
+export interface LayerDefinition {
+    id: string;
+    name: string;
+    visible: boolean;
+    pixels: Color[];
+}
+
 interface CanvasSnapshot {
     width: number;
     height: number;
@@ -25,6 +32,8 @@ interface CanvasSnapshot {
     tileModeEnabled: boolean;
     tiles: TileDefinition[];
     activeLibraryTileId: string | null;
+    layers: LayerDefinition[];
+    activeLayerId: string | null;
 }
 
 const createEmptyPixels = (width: number, height: number, fill: Color = DEFAULT_COLOR): Color[] => {
@@ -32,6 +41,21 @@ const createEmptyPixels = (width: number, height: number, fill: Color = DEFAULT_
 };
 
 const MAX_HISTORY = 100;
+
+const cloneLayer = (layer: LayerDefinition): LayerDefinition => ({ ...layer, pixels: [...layer.pixels] });
+
+const composePixels = (width: number, height: number, layers: LayerDefinition[]): Color[] => {
+    const composite = createEmptyPixels(width, height, DEFAULT_COLOR);
+    layers.forEach((layer) => {
+        if (!layer.visible) return;
+        layer.pixels.forEach((color, index) => {
+            if (color !== DEFAULT_COLOR) {
+                composite[index] = color;
+            }
+        });
+    });
+    return composite;
+};
 
 const createCanvasSnapshot = (state: CanvasState): CanvasSnapshot => ({
     width: state.width,
@@ -43,6 +67,8 @@ const createCanvasSnapshot = (state: CanvasState): CanvasSnapshot => ({
     tileModeEnabled: state.tileModeEnabled,
     tiles: state.tiles.map((tile) => ({ ...tile, pixels: [...tile.pixels] })),
     activeLibraryTileId: state.activeLibraryTileId,
+    layers: state.layers.map(cloneLayer),
+    activeLayerId: state.activeLayerId,
 });
 
 interface CanvasState {
@@ -55,6 +81,8 @@ interface CanvasState {
     tileModeEnabled: boolean;
     tiles: TileDefinition[];
     activeLibraryTileId: string | null;
+    layers: LayerDefinition[];
+    activeLayerId: string | null;
     past: CanvasSnapshot[];
     future: CanvasSnapshot[];
     pendingActionSnapshot: CanvasSnapshot | null;
@@ -82,6 +110,11 @@ interface CanvasStore extends CanvasState {
     commitAction: () => void;
     undo: () => void;
     redo: () => void;
+    addLayer: (name?: string) => void;
+    removeLayer: (id: string) => void;
+    toggleLayerVisibility: (id: string) => void;
+    setActiveLayer: (id: string | null) => void;
+    setLayerName: (id: string, name: string) => void;
 }
 
 export const useCanvasStore = create<CanvasStore>((set, get) => ({
@@ -94,6 +127,8 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
     tileModeEnabled: false,
     tiles: [],
     activeLibraryTileId: null,
+    layers: [{ id: crypto.randomUUID(), name: 'Layer 1', visible: true, pixels: createEmptyPixels(DEFAULT_WIDTH, DEFAULT_HEIGHT) }],
+    activeLayerId: null,
     past: [],
     future: [],
     pendingActionSnapshot: null,
@@ -101,18 +136,25 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
 
     setPixel: (x, y, color) => set((state) => {
         if (x < 0 || x >= state.width || y < 0 || y >= state.height) return state;
+        const activeLayer = state.layers.find((layer) => layer.id === state.activeLayerId) ?? state.layers[0];
+        if (!activeLayer) return state;
         const index = y * state.width + x;
-        if (state.pixels[index] === color) return state;
-        const newPixels = [...state.pixels];
-        newPixels[index] = color;
+        if (activeLayer.pixels[index] === color) return state;
+        const nextLayers = state.layers.map((layer) => layer.id === activeLayer.id ? cloneLayer(layer) : layer);
+        const targetLayer = nextLayers.find((layer) => layer.id === activeLayer.id);
+        if (!targetLayer) return state;
+        targetLayer.pixels[index] = color;
+        const nextPixels = composePixels(state.width, state.height, nextLayers);
         if (state.pendingActionSnapshot) {
             return {
-                pixels: newPixels,
+                pixels: nextPixels,
+                layers: nextLayers,
                 pendingActionDirty: true,
             };
         }
         return {
-            pixels: newPixels,
+            pixels: nextPixels,
+            layers: nextLayers,
             past: [...state.past, createCanvasSnapshot(state)].slice(-MAX_HISTORY),
             future: [],
         };
@@ -125,31 +167,12 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
         return state.pixels[index];
     },
 
-    clearCanvas: () => set((state) => ({
-        pixels: createEmptyPixels(state.width, state.height),
-        past: [...state.past, createCanvasSnapshot(state)].slice(-MAX_HISTORY),
-        future: [],
-        pendingActionSnapshot: null,
-        pendingActionDirty: false,
-    })),
-
-    resizeCanvas: (width, height) => set((state) => {
-        const newPixels = createEmptyPixels(width, height);
-        const minWidth = Math.min(state.width, width);
-        const minHeight = Math.min(state.height, height);
-        for (let y = 0; y < minHeight; y++) {
-            for (let x = 0; x < minWidth; x++) {
-                const oldIndex = y * state.width + x;
-                const newIndex = y * width + x;
-                newPixels[newIndex] = state.pixels[oldIndex];
-            }
-        }
+    clearCanvas: () => set((state) => {
+        const blankPixels = createEmptyPixels(state.width, state.height);
+        const layers = state.layers.map((layer) => ({ ...layer, pixels: createEmptyPixels(state.width, state.height) }));
         return {
-            width,
-            height,
-            pixels: newPixels,
-            selectedTile: null,
-            tileModeEnabled: false,
+            pixels: blankPixels,
+            layers,
             past: [...state.past, createCanvasSnapshot(state)].slice(-MAX_HISTORY),
             future: [],
             pendingActionSnapshot: null,
@@ -157,27 +180,67 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
         };
     }),
 
-    setAllPixels: (pixels2D) => set((state) => ({
-        width: pixels2D[0]?.length || 0,
-        height: pixels2D.length,
-        pixels: (() => {
-            if (!pixels2D.length) return [];
-            const w = pixels2D[0].length;
-            const h = pixels2D.length;
-            const flat = new Array(w * h);
-            for (let y = 0; y < h; y++) {
-                const row = pixels2D[y];
-                for (let x = 0; x < w; x++) {
-                    flat[y * w + x] = row[x];
+    resizeCanvas: (width, height) => set((state) => {
+        const resizedLayers = state.layers.map((layer) => {
+            const resizedPixels = createEmptyPixels(width, height);
+            const minWidth = Math.min(state.width, width);
+            const minHeight = Math.min(state.height, height);
+            for (let y = 0; y < minHeight; y++) {
+                for (let x = 0; x < minWidth; x++) {
+                    const oldIndex = y * state.width + x;
+                    const newIndex = y * width + x;
+                    resizedPixels[newIndex] = layer.pixels[oldIndex];
                 }
             }
-            return flat;
-        })(),
-        selectedTile: null,
-        tileModeEnabled: false,
-        past: [...state.past, createCanvasSnapshot(state)].slice(-MAX_HISTORY),
-        future: [],
-    })),
+            return { ...layer, pixels: resizedPixels };
+        });
+
+        return {
+            width,
+            height,
+            pixels: composePixels(width, height, resizedLayers),
+            selectedTile: null,
+            tileModeEnabled: false,
+            layers: resizedLayers,
+            past: [...state.past, createCanvasSnapshot(state)].slice(-MAX_HISTORY),
+            future: [],
+            pendingActionSnapshot: null,
+            pendingActionDirty: false,
+        };
+    }),
+
+    setAllPixels: (pixels2D) => set((state) => {
+        const width = pixels2D[0]?.length || 0;
+        const height = pixels2D.length;
+        const flat = (() => {
+            if (!pixels2D.length) return [];
+            const output = new Array(width * height);
+            for (let y = 0; y < height; y++) {
+                const row = pixels2D[y];
+                for (let x = 0; x < width; x++) {
+                    output[y * width + x] = row[x];
+                }
+            }
+            return output;
+        })();
+        const layer: LayerDefinition = {
+            id: crypto.randomUUID(),
+            name: 'Layer 1',
+            visible: true,
+            pixels: flat,
+        };
+        return {
+            width,
+            height,
+            pixels: composePixels(width, height, [layer]),
+            selectedTile: null,
+            tileModeEnabled: false,
+            layers: [layer],
+            activeLayerId: layer.id,
+            past: [...state.past, createCanvasSnapshot(state)].slice(-MAX_HISTORY),
+            future: [],
+        };
+    }),
 
     setTileSize: (width, height) => set((state) => ({
         tileWidth: width,
@@ -287,29 +350,45 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
         pendingActionDirty: false,
     })),
 
-    createNewProject: ({ width, height, tileWidth, tileHeight, backgroundColor }) => set((state) => ({
-        width: Number.isInteger(width) && width > 0 ? width : DEFAULT_WIDTH,
-        height: Number.isInteger(height) && height > 0 ? height : DEFAULT_HEIGHT,
-        pixels: createEmptyPixels(width, height, backgroundColor),
-        tileWidth: Number.isInteger(tileWidth) && tileWidth > 0 ? tileWidth : DEFAULT_TILE_WIDTH,
-        tileHeight: Number.isInteger(tileHeight) && tileHeight > 0 ? tileHeight : DEFAULT_TILE_HEIGHT,
-        tiles: [],
-        activeLibraryTileId: null,
-        selectedTile: null,
-        tileModeEnabled: false,
-        past: [...state.past, createCanvasSnapshot(state)].slice(-MAX_HISTORY),
-        future: [],
-        pendingActionSnapshot: null,
-        pendingActionDirty: false,
-    })),
+    createNewProject: ({ width, height, tileWidth, tileHeight, backgroundColor }) => set((state) => {
+        const layerPixels = createEmptyPixels(width, height, backgroundColor);
+        const layer: LayerDefinition = {
+            id: crypto.randomUUID(),
+            name: 'Layer 1',
+            visible: true,
+            pixels: layerPixels,
+        };
+        return {
+            width: Number.isInteger(width) && width > 0 ? width : DEFAULT_WIDTH,
+            height: Number.isInteger(height) && height > 0 ? height : DEFAULT_HEIGHT,
+            pixels: composePixels(width, height, [layer]),
+            tileWidth: Number.isInteger(tileWidth) && tileWidth > 0 ? tileWidth : DEFAULT_TILE_WIDTH,
+            tileHeight: Number.isInteger(tileHeight) && tileHeight > 0 ? tileHeight : DEFAULT_TILE_HEIGHT,
+            tiles: [],
+            activeLibraryTileId: null,
+            selectedTile: null,
+            tileModeEnabled: false,
+            layers: [layer],
+            activeLayerId: layer.id,
+            past: [...state.past, createCanvasSnapshot(state)].slice(-MAX_HISTORY),
+            future: [],
+            pendingActionSnapshot: null,
+            pendingActionDirty: false,
+        };
+    }),
 
     fillArea: (x, y, color, canEditPixel) => set((state) => {
         if (x < 0 || x >= state.width || y < 0 || y >= state.height) return state;
+        const activeLayer = state.layers.find((layer) => layer.id === state.activeLayerId) ?? state.layers[0];
+        if (!activeLayer) return state;
         const startIndex = y * state.width + x;
-        const targetColor = state.pixels[startIndex];
+        const targetColor = activeLayer.pixels[startIndex];
         if (targetColor === color) return state;
 
-        const newPixels = [...state.pixels];
+        const nextLayers = state.layers.map((layer) => layer.id === activeLayer.id ? cloneLayer(layer) : layer);
+        const targetLayer = nextLayers.find((layer) => layer.id === activeLayer.id);
+        if (!targetLayer) return state;
+        const newPixels = [...targetLayer.pixels];
         const visited = new Uint8Array(state.width * state.height);
         const stack: number[] = [startIndex];
         visited[startIndex] = 1;
@@ -358,16 +437,20 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
         }
 
         if (!changed) return state;
+        targetLayer.pixels = newPixels;
+        const nextPixels = composePixels(state.width, state.height, nextLayers);
 
         if (state.pendingActionSnapshot) {
             return {
-                pixels: newPixels,
+                pixels: nextPixels,
+                layers: nextLayers,
                 pendingActionDirty: true,
             };
         }
 
         return {
-            pixels: newPixels,
+            pixels: nextPixels,
+            layers: nextLayers,
             past: [...state.past, createCanvasSnapshot(state)].slice(-MAX_HISTORY),
             future: [],
         };
@@ -390,6 +473,56 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
             future: [],
         };
     }),
+
+    addLayer: (name) => set((state) => {
+        const newLayer: LayerDefinition = {
+            id: crypto.randomUUID(),
+            name: name?.trim() || `Layer ${state.layers.length + 1}`,
+            visible: true,
+            pixels: createEmptyPixels(state.width, state.height, DEFAULT_COLOR),
+        };
+        const nextLayers = [...state.layers, newLayer];
+        return {
+            pixels: composePixels(state.width, state.height, nextLayers),
+            layers: nextLayers,
+            activeLayerId: newLayer.id,
+            past: [...state.past, createCanvasSnapshot(state)].slice(-MAX_HISTORY),
+            future: [],
+            pendingActionSnapshot: null,
+            pendingActionDirty: false,
+        };
+    }),
+
+    removeLayer: (id) => set((state) => {
+        if (state.layers.length <= 1) return state;
+        const nextLayers = state.layers.filter((layer) => layer.id !== id);
+        const nextActiveId = state.activeLayerId === id ? nextLayers[0]?.id ?? null : state.activeLayerId;
+        return {
+            pixels: composePixels(state.width, state.height, nextLayers),
+            layers: nextLayers,
+            activeLayerId: nextActiveId,
+            past: [...state.past, createCanvasSnapshot(state)].slice(-MAX_HISTORY),
+            future: [],
+            pendingActionSnapshot: null,
+            pendingActionDirty: false,
+        };
+    }),
+
+    toggleLayerVisibility: (id) => set((state) => {
+        const nextLayers = state.layers.map((layer) => layer.id === id ? { ...layer, visible: !layer.visible } : layer);
+        return {
+            pixels: composePixels(state.width, state.height, nextLayers),
+            layers: nextLayers,
+            pendingActionSnapshot: null,
+            pendingActionDirty: false,
+        };
+    }),
+
+    setActiveLayer: (id) => set({ activeLayerId: id }),
+
+    setLayerName: (id, name) => set((state) => ({
+        layers: state.layers.map((layer) => layer.id === id ? { ...layer, name: name.trim() || layer.name } : layer),
+    })),
 
     undo: () => set((state) => {
         if (!state.past.length) return state;
