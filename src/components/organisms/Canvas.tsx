@@ -57,6 +57,10 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(
       setPixel,
       getPixel,
       tileWidth,
+      beginAction,
+      commitAction,
+      undo,
+      redo,
       tileHeight,
       selectedTile,
       tileModeEnabled,
@@ -211,6 +215,8 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(
       onTranslateYChange: setTranslateY,
       currentTranslateX: translateX,
       currentTranslateY: translateY,
+      onActionStart: beginAction,
+      onActionEnd: commitAction,
     });
 
     const handleMouseMoveWrapper = useCallback(
@@ -224,6 +230,8 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(
     useKeyboardShortcuts({
       copySelection,
       pasteAtMouse,
+      undo,
+      redo,
     });
 
     usePreventContextMenu(containerRef);
@@ -379,6 +387,7 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(
           }
           const indices = getPixelIndexFromEvent(e.clientX, e.clientY, rect);
           if (!indices) return;
+          beginAction();
           let placedPixels = 0;
           for (let y = 0; y < tile.height; y++) {
             for (let x = 0; x < tile.width; x++) {
@@ -390,11 +399,12 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(
             }
           }
           if (!placedPixels) toast.warning("This placement is outside the locked tile area.");
+          commitAction();
           return;
         }
         handleMouseDown(e);
       },
-      [activeTool, getPixelIndexFromEvent, tileWidth, tileHeight, selectTile, setTileMode, handleMouseDown, getActiveLibraryTile, effectiveWidth, effectiveHeight, checkTileBounds, setPixel],
+      [activeTool, getPixelIndexFromEvent, tileWidth, tileHeight, selectTile, setTileMode, handleMouseDown, getActiveLibraryTile, effectiveWidth, effectiveHeight, checkTileBounds, setPixel, beginAction, commitAction],
     );
 
     const containerStyle = useMemo(() => ({

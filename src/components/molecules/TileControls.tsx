@@ -21,10 +21,17 @@ export const TileControls: React.FC = () => {
     const { setActiveTool } = useToolStore();
     const [tileName, setTileName] = useState('');
 
+    const maxTileWidth = Math.max(1, canvasWidth);
+    const maxTileHeight = Math.max(1, canvasHeight);
+    const safeTileWidth = Math.min(tileWidth, maxTileWidth);
+    const safeTileHeight = Math.min(tileHeight, maxTileHeight);
+
     const updateSize = (dimension: 'width' | 'height', rawValue: string) => {
-        const value = Number.parseInt(rawValue, 10);
-        if (!Number.isInteger(value) || value < 1 || value > 256) return;
-        setTileSize(dimension === 'width' ? value : tileWidth, dimension === 'height' ? value : tileHeight);
+        const parsedValue = Number.parseInt(rawValue, 10);
+        const maxValue = dimension === 'width' ? maxTileWidth : maxTileHeight;
+        if (!Number.isInteger(parsedValue)) return;
+        const clampedValue = Math.min(Math.max(parsedValue, 1), maxValue);
+        setTileSize(dimension === 'width' ? clampedValue : safeTileWidth, dimension === 'height' ? clampedValue : safeTileHeight);
     };
 
     const capture = () => {
@@ -73,22 +80,22 @@ export const TileControls: React.FC = () => {
         toast.success('Spritesheet exported.');
     };
 
-    const columns = Math.ceil(canvasWidth / tileWidth);
-    const rows = Math.ceil(canvasHeight / tileHeight);
+    const columns = Math.ceil(canvasWidth / safeTileWidth);
+    const rows = Math.ceil(canvasHeight / safeTileHeight);
 
     return (
         <div className="flex flex-col gap-5">
             <section className="flex flex-col gap-3">
                 <div className="flex items-center justify-between">
                     <span className="text-xs text-gray-300 font-medium">Tile grid</span>
-                    <span className="text-xs text-gray-500 font-mono">{tileWidth}×{tileHeight}</span>
+                    <span className="text-xs text-gray-500 font-mono">{safeTileWidth}×{safeTileHeight}</span>
                 </div>
                 <div className="flex gap-3">
                     <label className="w-1/2 text-xs text-gray-500">Width
-                        <input type="number" value={tileWidth} onChange={(event) => updateSize('width', event.target.value)} min={1} max={256} className="mt-1.5 w-full bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg px-3 py-2 text-center text-gray-200 text-sm focus:border-blue-500 focus:outline-none" />
+                        <input type="number" value={safeTileWidth} onChange={(event) => updateSize('width', event.target.value)} min={1} max={maxTileWidth} className="mt-1.5 w-full bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg px-3 py-2 text-center text-gray-200 text-sm focus:border-blue-500 focus:outline-none" />
                     </label>
                     <label className="w-1/2 text-xs text-gray-500">Height
-                        <input type="number" value={tileHeight} onChange={(event) => updateSize('height', event.target.value)} min={1} max={256} className="mt-1.5 w-full bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg px-3 py-2 text-center text-gray-200 text-sm focus:border-blue-500 focus:outline-none" />
+                        <input type="number" value={safeTileHeight} onChange={(event) => updateSize('height', event.target.value)} min={1} max={maxTileHeight} className="mt-1.5 w-full bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg px-3 py-2 text-center text-gray-200 text-sm focus:border-blue-500 focus:outline-none" />
                     </label>
                 </div>
                 <p className="text-xs text-gray-500">Canvas grid: {columns}×{rows} tile areas</p>

@@ -18,7 +18,7 @@ import ExportModal from '../molecules/ExportModal';
 import ColorModal from '../molecules/ColorModal';
 
 export const EditorPage: React.FC = () => {
-    const { clearCanvas, width: gridWidth, height: gridHeight } = useCanvasStore();
+    const { clearCanvas, width: gridWidth, height: gridHeight, undo, redo } = useCanvasStore();
     const { currentColor, setCurrentColor } = useToolStore();
     const {
         colors: paletteColors,
@@ -48,8 +48,18 @@ export const EditorPage: React.FC = () => {
                 setShowActiveColorModal(v => !v);
             }
         };
+        const handleRefreshShortcut = (e: KeyboardEvent) => {
+            if (e.key === 'F5' || ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'r')) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+        };
         window.addEventListener('keydown', handleGlobalShortcut);
-        return () => window.removeEventListener('keydown', handleGlobalShortcut);
+        window.addEventListener('keydown', handleRefreshShortcut);
+        return () => {
+            window.removeEventListener('keydown', handleGlobalShortcut);
+            window.removeEventListener('keydown', handleRefreshShortcut);
+        };
     }, []);
 
     useLayoutEffect(() => {
@@ -83,7 +93,7 @@ export const EditorPage: React.FC = () => {
         };
     }, [gridWidth, gridHeight]);
 
-    const handleExport = () => setShowExportModal(true);
+    const handleExport = () => setShowExportModal((value) => !value);
     const handleExportConfirm = (options: ExportOptions) => {
         exportCanvas(options);
         setShowExportModal(false);
@@ -219,6 +229,13 @@ export const EditorPage: React.FC = () => {
                         <div className="flex items-center gap-1.5">
                             <button onClick={handleCopy} className="w-8 h-8 flex items-center justify-center bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg hover:border-blue-500 hover:text-blue-400 text-gray-400 transition-all" title="Copy (Ctrl+C)"><CopyIcon className="w-4 h-4" /></button>
                             <button onClick={handlePaste} className="w-8 h-8 flex items-center justify-center bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg hover:border-blue-500 hover:text-blue-400 text-gray-400 transition-all" title="Paste (Ctrl+V)"><PasteIcon className="w-4 h-4" /></button>
+                        </div>
+
+                        <div className="w-px h-6 bg-[#2a2a2a] hidden sm:block" />
+
+                        <div className="flex items-center gap-2">
+                            <button onClick={() => undo()} className="px-3 py-1.5 text-xs font-medium tracking-wide text-gray-400 hover:text-white border border-[#2a2a2a] hover:border-blue-500/50 rounded-lg transition-all bg-[#1a1a1a] hover:bg-[#222]" title="Undo (Ctrl+Z)">Undo</button>
+                            <button onClick={() => redo()} className="px-3 py-1.5 text-xs font-medium tracking-wide text-gray-400 hover:text-white border border-[#2a2a2a] hover:border-blue-500/50 rounded-lg transition-all bg-[#1a1a1a] hover:bg-[#222]" title="Redo (Ctrl+Shift+Z)">Redo</button>
                         </div>
 
                         <div className="w-px h-6 bg-[#2a2a2a] hidden sm:block" />

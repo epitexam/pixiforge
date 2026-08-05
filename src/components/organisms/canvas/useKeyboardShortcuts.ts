@@ -3,11 +3,15 @@ import { useEffect } from "react";
 interface UseKeyboardShortcutsProps {
   copySelection: () => void;
   pasteAtMouse: () => void;
+  undo: () => void;
+  redo: () => void;
 }
 
 export const useKeyboardShortcuts = ({
   copySelection,
   pasteAtMouse,
+  undo,
+  redo,
 }: UseKeyboardShortcutsProps) => {
   useEffect(() => {
     const handleKeyDown = (e: globalThis.KeyboardEvent) => {
@@ -21,10 +25,20 @@ export const useKeyboardShortcuts = ({
         } else if (e.key === "v") {
           e.preventDefault();
           pasteAtMouse();
+        } else if (e.key.toLowerCase() === "z") {
+          e.preventDefault();
+          if (e.shiftKey) {
+            redo();
+          } else {
+            undo();
+          }
+        } else if (e.key.toLowerCase() === "y") {
+          e.preventDefault();
+          redo();
         }
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [copySelection, pasteAtMouse]);
+  }, [copySelection, pasteAtMouse, undo, redo]);
 };

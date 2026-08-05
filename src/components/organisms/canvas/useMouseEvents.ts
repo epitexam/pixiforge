@@ -18,6 +18,8 @@ interface UseMouseEventsProps {
   onTranslateYChange: (y: number) => void;
   currentTranslateX: number;
   currentTranslateY: number;
+  onActionStart?: () => void;
+  onActionEnd?: () => void;
 }
 
 export const useMouseEvents = ({
@@ -32,6 +34,8 @@ export const useMouseEvents = ({
   onTranslateYChange,
   currentTranslateX,
   currentTranslateY,
+  onActionStart,
+  onActionEnd,
 }: UseMouseEventsProps) => {
   const [isDrawing, setIsDrawing] = useState(false);
   const [isSelecting, setIsSelecting] = useState(false);
@@ -73,10 +77,11 @@ export const useMouseEvents = ({
         setSelectionEnd(indices);
       } else {
         setIsDrawing(true);
+        onActionStart?.();
         handlePixelAction(indices.x, indices.y);
       }
     },
-    [activeTool, getPixelIndexFromEvent, handlePixelAction, canSelectPoint, containerRef],
+    [activeTool, getPixelIndexFromEvent, handlePixelAction, canSelectPoint, containerRef, onActionStart],
   );
 
   const handleMouseMove = useCallback(
@@ -154,6 +159,7 @@ export const useMouseEvents = ({
         }
       } else {
         setIsDrawing(false);
+        onActionEnd?.();
       }
     },
     [
@@ -165,15 +171,19 @@ export const useMouseEvents = ({
       isPointInSelection,
       getPixelIndexFromEvent,
       containerRef,
+      onActionEnd,
     ],
   );
 
   const handleMouseLeave = useCallback(() => {
-    setIsDrawing(false);
+    if (isDrawing) {
+      setIsDrawing(false);
+      onActionEnd?.();
+    }
     setIsPanning(false);
     setIsSelecting(false);
     setLastPanPoint(null);
-  }, []);
+  }, [isDrawing, onActionEnd]);
 
   return {
     isDrawing,

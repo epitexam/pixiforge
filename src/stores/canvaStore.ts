@@ -15,9 +15,35 @@ export interface TileDefinition {
     pixels: Color[];
 }
 
+interface CanvasSnapshot {
+    width: number;
+    height: number;
+    pixels: Color[];
+    tileWidth: number;
+    tileHeight: number;
+    selectedTile: { col: number; row: number } | null;
+    tileModeEnabled: boolean;
+    tiles: TileDefinition[];
+    activeLibraryTileId: string | null;
+}
+
 const createEmptyPixels = (width: number, height: number): Color[] => {
     return new Array(width * height).fill(DEFAULT_COLOR);
 };
+
+const MAX_HISTORY = 100;
+
+const createCanvasSnapshot = (state: CanvasState): CanvasSnapshot => ({
+    width: state.width,
+    height: state.height,
+    pixels: [...state.pixels],
+    tileWidth: state.tileWidth,
+    tileHeight: state.tileHeight,
+    selectedTile: state.selectedTile ? { ...state.selectedTile } : null,
+    tileModeEnabled: state.tileModeEnabled,
+    tiles: state.tiles.map((tile) => ({ ...tile, pixels: [...tile.pixels] })),
+    activeLibraryTileId: state.activeLibraryTileId,
+});
 
 interface CanvasState {
     width: number;
@@ -29,6 +55,10 @@ interface CanvasState {
     tileModeEnabled: boolean;
     tiles: TileDefinition[];
     activeLibraryTileId: string | null;
+    past: CanvasSnapshot[];
+    future: CanvasSnapshot[];
+    pendingActionSnapshot: CanvasSnapshot | null;
+    pendingActionDirty: boolean;
 }
 
 interface CanvasStore extends CanvasState {
@@ -46,6 +76,10 @@ interface CanvasStore extends CanvasState {
     setActiveLibraryTile: (id: string | null) => void;
     getActiveLibraryTile: () => TileDefinition | null;
     loadTileProject: (tileWidth: number, tileHeight: number, tiles: TileDefinition[]) => void;
+    beginAction: () => void;
+    commitAction: () => void;
+    undo: () => void;
+    redo: () => void;
 }
 
 export const useCanvasStore = create<CanvasStore>((set, get) => ({
@@ -58,13 +92,28 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
     tileModeEnabled: false,
     tiles: [],
     activeLibraryTileId: null,
+    past: [],
+    future: [],
+    pendingActionSnapshot: null,
+    pendingActionDirty: false,
 
     setPixel: (x, y, color) => set((state) => {
         if (x < 0 || x >= state.width || y < 0 || y >= state.height) return state;
         const index = y * state.width + x;
+        if (state.pixels[index] === color) return state;
         const newPixels = [...state.pixels];
         newPixels[index] = color;
-        return { pixels: newPixels };
+        if (state.pendingActionSnapshot) {
+            return {
+                pixels: newPixels,
+                pendingActionDirty: true,
+            };
+        }
+        return {
+            pixels: newPixels,
+            past: [...state.past, createCanvasSnapshot(state)].slice(-MAX_HISTORY),
+            future: [],
+        };
     }),
 
     getPixel: (x, y) => {
@@ -75,7 +124,11 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
     },
 
     clearCanvas: () => set((state) => ({
-        pixels: createEmptyPixels(state.width, state.height)
+        pixels: createEmptyPixels(state.width, state.height),
+        past: [...state.past, createCanvasSnapshot(state)].slice(-MAX_HISTORY),
+        future: [],
+        pendingActionSnapshot: null,
+        pendingActionDirty: false,
     })),
 
     resizeCanvas: (width, height) => set((state) => {
@@ -89,10 +142,20 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
                 newPixels[newIndex] = state.pixels[oldIndex];
             }
         }
-        return { width, height, pixels: newPixels, selectedTile: null, tileModeEnabled: false };
+        return {
+            width,
+            height,
+            pixels: newPixels,
+            selectedTile: null,
+            tileModeEnabled: false,
+            past: [...state.past, createCanvasSnapshot(state)].slice(-MAX_HISTORY),
+            future: [],
+            pendingActionSnapshot: null,
+            pendingActionDirty: false,
+        };
     }),
 
-    setAllPixels: (pixels2D) => set({
+    setAllPixels: (pixels2D) => set((state) => ({
         width: pixels2D[0]?.length || 0,
         height: pixels2D.length,
         pixels: (() => {
@@ -110,19 +173,43 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
         })(),
         selectedTile: null,
         tileModeEnabled: false,
-    }),
+        past: [...state.past, createCanvasSnapshot(state)].slice(-MAX_HISTORY),
+        future: [],
+    })),
 
-    setTileSize: (width, height) => set(() => {
-        return { tileWidth: width, tileHeight: height, selectedTile: null, tileModeEnabled: false };
-    }),
+    setTileSize: (width, height) => set((state) => ({
+        tileWidth: width,
+        tileHeight: height,
+        selectedTile: null,
+        tileModeEnabled: false,
+        past: [...state.past, createCanvasSnapshot(state)].slice(-MAX_HISTORY),
+        future: [],
+    })),
 
-    selectTile: (col, row) => set({ selectedTile: { col, row } }),
+    selectTile: (col, row) => set((state) => ({
+        selectedTile: { col, row },
+        past: [...state.past, createCanvasSnapshot(state)].slice(-MAX_HISTORY),
+        future: [],
+        pendingActionSnapshot: null,
+        pendingActionDirty: false,
+    })),
 
     setTileMode: (enabled) => set((state) => {
         if (enabled && !state.selectedTile) {
-            return { tileModeEnabled: true, selectedTile: { col: 0, row: 0 } };
+            return {
+                tileModeEnabled: true,
+                selectedTile: { col: 0, row: 0 },
+                past: [...state.past, createCanvasSnapshot(state)].slice(-MAX_HISTORY),
+                future: [],
+                pendingActionSnapshot: null,
+                pendingActionDirty: false,
+            };
         }
-        return { tileModeEnabled: enabled };
+        return {
+            tileModeEnabled: enabled,
+            past: [...state.past, createCanvasSnapshot(state)].slice(-MAX_HISTORY),
+            future: [],
+        };
     }),
 
     captureTile: (name) => {
@@ -148,32 +235,91 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
             height,
             pixels,
         };
-        set((current) => ({ tiles: [...current.tiles, tile], activeLibraryTileId: tile.id }));
+        set((current) => ({
+            tiles: [...current.tiles, tile],
+            activeLibraryTileId: tile.id,
+            past: [...current.past, createCanvasSnapshot(current)].slice(-MAX_HISTORY),
+            future: [],
+            pendingActionSnapshot: null,
+            pendingActionDirty: false,
+        }));
         return tile;
     },
 
     removeTile: (id) => set((state) => ({
         tiles: state.tiles.filter((tile) => tile.id !== id),
         activeLibraryTileId: state.activeLibraryTileId === id ? null : state.activeLibraryTileId,
+        past: [...state.past, createCanvasSnapshot(state)].slice(-MAX_HISTORY),
+        future: [],
     })),
 
     renameTile: (id, name) => set((state) => ({
         tiles: state.tiles.map((tile) => tile.id === id ? { ...tile, name: name.trim() || tile.name } : tile),
+        past: [...state.past, createCanvasSnapshot(state)].slice(-MAX_HISTORY),
+        future: [],
     })),
 
-    setActiveLibraryTile: (id) => set({ activeLibraryTileId: id }),
+    setActiveLibraryTile: (id) => set((state) => ({
+        activeLibraryTileId: id,
+        past: [...state.past, createCanvasSnapshot(state)].slice(-MAX_HISTORY),
+        future: [],
+        pendingActionSnapshot: null,
+        pendingActionDirty: false,
+    })),
 
     getActiveLibraryTile: () => {
         const state = get();
         return state.tiles.find((tile) => tile.id === state.activeLibraryTileId) ?? null;
     },
 
-    loadTileProject: (tileWidth, tileHeight, tiles) => set({
+    loadTileProject: (tileWidth, tileHeight, tiles) => set((state) => ({
         tileWidth: Number.isInteger(tileWidth) && tileWidth > 0 ? tileWidth : DEFAULT_TILE_WIDTH,
         tileHeight: Number.isInteger(tileHeight) && tileHeight > 0 ? tileHeight : DEFAULT_TILE_HEIGHT,
         tiles: Array.isArray(tiles) ? tiles : [],
         activeLibraryTileId: null,
         selectedTile: null,
         tileModeEnabled: false,
+        past: [...state.past, createCanvasSnapshot(state)].slice(-MAX_HISTORY),
+        future: [],
+        pendingActionSnapshot: null,
+        pendingActionDirty: false,
+    })),
+
+    beginAction: () => set((state) => {
+        if (state.pendingActionSnapshot) return state;
+        return {
+            pendingActionSnapshot: createCanvasSnapshot(state),
+            pendingActionDirty: false,
+        };
+    }),
+
+    commitAction: () => set((state) => {
+        if (!state.pendingActionSnapshot) return state;
+        return {
+            pendingActionSnapshot: null,
+            pendingActionDirty: false,
+            past: state.pendingActionDirty ? [...state.past, state.pendingActionSnapshot].slice(-MAX_HISTORY) : state.past,
+            future: [],
+        };
+    }),
+
+    undo: () => set((state) => {
+        if (!state.past.length) return state;
+        const previousSnapshot = state.past[state.past.length - 1];
+        return {
+            ...previousSnapshot,
+            past: state.past.slice(0, -1),
+            future: [...state.future, createCanvasSnapshot(state)].slice(-MAX_HISTORY),
+        };
+    }),
+
+    redo: () => set((state) => {
+        if (!state.future.length) return state;
+        const nextSnapshot = state.future[state.future.length - 1];
+        return {
+            ...nextSnapshot,
+            past: [...state.past, createCanvasSnapshot(state)].slice(-MAX_HISTORY),
+            future: state.future.slice(0, -1),
+        };
     }),
 }));
