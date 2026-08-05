@@ -4,6 +4,7 @@ import {
   useImperativeHandle,
   useMemo,
   useRef,
+  useState,
 } from "react";
 import { CanvasHandle } from "./canvas/types";
 import { DEFAULT_COLOR, useCanvasStore } from "../../stores/canvaStore";
@@ -20,6 +21,7 @@ import { SelectionOverlay } from "./canvas/SelectionOverlay";
 import { useKeyboardSelectionClear } from "./canvas/useKeyboardSelectionClear";
 import { useTileMode } from "./canvas/useTileMode";
 import { toast } from "sonner";
+import { Color } from "../../types";
 
 export interface CanvasProps {
   width?: number;
@@ -32,6 +34,7 @@ export interface CanvasProps {
   onTranslateXChange?: (x: number) => void;
   translateY?: number;
   onTranslateYChange?: (y: number) => void;
+  brushSize?: number;
 }
 
 export const Canvas = forwardRef<CanvasHandle, CanvasProps>(
@@ -47,6 +50,7 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(
       onTranslateXChange,
       translateY: externalTranslateY,
       onTranslateYChange,
+      brushSize = 1,
     },
     ref,
   ) => {
@@ -83,6 +87,8 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const lastMousePosRef = useGlobalMousePosition();
+    const [shapeStart, setShapeStart] = useState<{ x: number; y: number } | null>(null);
+    const [shapeEnd, setShapeEnd] = useState<{ x: number; y: number } | null>(null);
 
     const { scale, translateX, translateY, setTranslateX, setTranslateY } =
       useZoomPan({
@@ -130,6 +136,9 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(
       copySelection,
       pasteSelection,
       pasteAtMouse,
+      moveSelection,
+      selectionDragOffset,
+      setSelectionDragOffset,
     } = useSelection(
       pixels,
       effectiveWidth,
@@ -164,6 +173,111 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(
       tileHeight,
     });
 
+    const drawShape = useCallback(
+      (start: { x: number; y: number }, end: { x: number; y: number }) => {
+        const { x: x1, y: y1 } = start;
+        const { x: x2, y: y2 } = end;
+        const drawPoint = (px: number, py: number) => {
+          if (tileModeEnabled && selectedTile) {
+            if (!checkTileBounds(px, py)) return;
+          }
+          setPixel(px, py, currentColor);
+        };
+
+        const drawLine = () => {
+          const dx = Math.abs(x2 - x1);
+          const dy = Math.abs(y2 - y1);
+          const sx = x1 < x2 ? 1 : -1;
+          const sy = y1 < y2 ? 1 : -1;
+          let err = dx - dy;
+          let currentX = x1;
+          let currentY = y1;
+
+          while (true) {
+            drawPoint(currentX, currentY);
+            if (currentX === x2 && currentY === y2) break;
+            const e2 = err * 2;
+            if (e2 > -dy) {
+              err -= dy;
+              currentX += sx;
+            }
+            if (e2 < dx) {
+              err += dx;
+              currentY += sy;
+            }
+          }
+        };
+
+        const drawRectangle = () => {
+          const minX = Math.min(x1, x2);
+          const maxX = Math.max(x1, x2);
+          const minY = Math.min(y1, y2);
+          const maxY = Math.max(y1, y2);
+          for (let y = minY; y <= maxY; y++) {
+            for (let x = minX; x <= maxX; x++) {
+              if (x === minX || x === maxX || y === minY || y === maxY) {
+                drawPoint(x, y);
+              }
+            }
+          }
+        };
+
+        const drawEllipse = () => {
+          const minX = Math.min(x1, x2);
+          const maxX = Math.max(x1, x2);
+          const minY = Math.min(y1, y2);
+          const maxY = Math.max(y1, y2);
+          const rx = Math.max(1, Math.floor((maxX - minX) / 2));
+          const ry = Math.max(1, Math.floor((maxY - minY) / 2));
+          const cx = Math.floor((minX + maxX) / 2);
+          const cy = Math.floor((minY + maxY) / 2);
+
+          for (let y = minY; y <= maxY; y++) {
+            for (let x = minX; x <= maxX; x++) {
+              const normalizedX = (x - cx) / rx;
+              const normalizedY = (y - cy) / ry;
+              if (normalizedX * normalizedX + normalizedY * normalizedY <= 1) {
+                drawPoint(x, y);
+              }
+            }
+          }
+        };
+
+        switch (activeTool) {
+          case "line":
+            drawLine();
+            break;
+          case "rectangle":
+            drawRectangle();
+            break;
+          case "ellipse":
+            drawEllipse();
+            break;
+          default:
+            break;
+        }
+      },
+      [activeTool, checkTileBounds, currentColor, selectedTile, setPixel, tileModeEnabled],
+    );
+
+    const paintBrush = useCallback(
+      (x: number, y: number, color: Color) => {
+        const radius = Math.max(1, Math.floor(brushSize / 2));
+        for (let dy = -radius; dy <= radius; dy++) {
+          for (let dx = -radius; dx <= radius; dx++) {
+            const px = x + dx;
+            const py = y + dy;
+            if (px < 0 || py < 0 || px >= effectiveWidth || py >= effectiveHeight) continue;
+            if (tileModeEnabled && selectedTile) {
+              if (!checkTileBounds(px, py)) continue;
+            }
+            setPixel(px, py, color);
+          }
+        }
+      },
+      [brushSize, checkTileBounds, effectiveWidth, effectiveHeight, selectedTile, setPixel, tileModeEnabled],
+    );
+
     const handlePixelAction = useCallback(
       (x: number, y: number) => {
         if (tileModeEnabled && selectedTile) {
@@ -178,10 +292,10 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(
 
         switch (activeTool) {
           case "pencil":
-            setPixel(x, y, currentColor);
+            paintBrush(x, y, currentColor);
             break;
           case "eraser":
-            setPixel(x, y, DEFAULT_COLOR);
+            paintBrush(x, y, DEFAULT_COLOR);
             break;
           case "smartFill":
             fillArea(x, y, currentColor, (px, py) => {
@@ -200,7 +314,7 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(
             break;
         }
       },
-      [activeTool, currentColor, setPixel, getPixel, fillArea, setCurrentColor, tileModeEnabled, selectedTile, checkTileBounds],
+      [activeTool, currentColor, setPixel, getPixel, fillArea, setCurrentColor, tileModeEnabled, selectedTile, checkTileBounds, paintBrush],
     );
 
     const {
@@ -224,17 +338,34 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(
       onTranslateYChange: setTranslateY,
       currentTranslateX: translateX,
       currentTranslateY: translateY,
-      onActionStart: beginAction,
-      onActionEnd: commitAction,
+      onActionStart: () => {
+        beginAction();
+      },
+      onActionEnd: () => {
+        commitAction();
+      },
+      onShapeStart: (point) => {
+        setShapeStart(point);
+        setShapeEnd(point);
+      },
+      onShapeUpdate: (point) => {
+        setShapeEnd(point);
+      },
+      onShapeComplete: () => {
+        if (shapeStart && shapeEnd) {
+          drawShape(shapeStart, shapeEnd);
+        }
+        setShapeStart(null);
+        setShapeEnd(null);
+      },
     });
 
-    const handleMouseMoveWrapper = useCallback(
-      (e: React.MouseEvent) => {
-        handleMouseMove(e);
-        handleMouseMoveTile(e.clientX, e.clientY);
-      },
-      [handleMouseMove, handleMouseMoveTile],
-    );
+    const handleMouseUpSelection = useCallback(() => {
+      if (selectionDragOffset) {
+        setSelectionDragOffset(null);
+        commitAction();
+      }
+    }, [selectionDragOffset, commitAction, setSelectionDragOffset]);
 
     useKeyboardShortcuts({
       copySelection,
@@ -386,6 +517,19 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(
           }
           return;
         }
+        if (selectionRect && activeTool === 'select' && e.button === 0) {
+          const rect = containerRef.current?.getBoundingClientRect();
+          if (rect) {
+            const indices = getPixelIndexFromEvent(e.clientX, e.clientY, rect);
+            if (indices) {
+              const offsetX = indices.x - selectionRect.x;
+              const offsetY = indices.y - selectionRect.y;
+              setSelectionDragOffset({ x: offsetX, y: offsetY });
+              beginAction();
+              return;
+            }
+          }
+        }
         if (activeTool === "tileStamp") {
           if (e.button !== 0) return;
           const rect = containerRef.current?.getBoundingClientRect();
@@ -416,6 +560,29 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(
       [activeTool, getPixelIndexFromEvent, tileWidth, tileHeight, selectTile, setTileMode, handleMouseDown, getActiveLibraryTile, effectiveWidth, effectiveHeight, checkTileBounds, setPixel, beginAction, commitAction],
     );
 
+    const handleMouseMoveSelection = useCallback((e: React.MouseEvent) => {
+      if (!selectionRect || !selectionDragOffset) return;
+      const rect = containerRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      const indices = getPixelIndexFromEvent(e.clientX, e.clientY, rect);
+      if (!indices) return;
+      const targetX = indices.x - selectionDragOffset.x;
+      const targetY = indices.y - selectionDragOffset.y;
+      moveSelection(targetX, targetY);
+    }, [selectionRect, selectionDragOffset, getPixelIndexFromEvent, moveSelection]);
+
+    const handleMouseMoveWrapper = useCallback(
+      (e: React.MouseEvent) => {
+        if (selectionRect && selectionDragOffset) {
+          handleMouseMoveSelection(e);
+          return;
+        }
+        handleMouseMove(e);
+        handleMouseMoveTile(e.clientX, e.clientY);
+      },
+      [handleMouseMove, handleMouseMoveTile, handleMouseMoveSelection, selectionRect, selectionDragOffset],
+    );
+
     const containerStyle = useMemo(() => ({
       width: effectiveWidth * cellSize,
       height: effectiveHeight * cellSize,
@@ -435,7 +602,10 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(
         style={containerStyle}
         onMouseDown={customHandleMouseDown}
         onMouseMove={handleMouseMoveWrapper}
-        onMouseUp={handleMouseUp}
+        onMouseUp={(event) => {
+          handleMouseUp(event);
+          handleMouseUpSelection();
+        }}
         onMouseLeave={handleMouseLeave}
       >
         <canvas

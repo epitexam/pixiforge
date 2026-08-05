@@ -20,6 +20,9 @@ interface UseMouseEventsProps {
   currentTranslateY: number;
   onActionStart?: () => void;
   onActionEnd?: () => void;
+  onShapeStart?: (point: { x: number; y: number }) => void;
+  onShapeUpdate?: (point: { x: number; y: number }) => void;
+  onShapeComplete?: () => void;
 }
 
 export const useMouseEvents = ({
@@ -36,6 +39,9 @@ export const useMouseEvents = ({
   currentTranslateY,
   onActionStart,
   onActionEnd,
+  onShapeStart,
+  onShapeUpdate,
+  onShapeComplete,
 }: UseMouseEventsProps) => {
   const [isDrawing, setIsDrawing] = useState(false);
   const [isSelecting, setIsSelecting] = useState(false);
@@ -75,14 +81,14 @@ export const useMouseEvents = ({
         setIsSelecting(true);
         setSelectionStart(indices);
         setSelectionEnd(indices);
+      } else if (activeTool === "line" || activeTool === "rectangle" || activeTool === "ellipse") {
+        setIsDrawing(true);
+        onActionStart?.();
+        onShapeStart?.(indices);
       } else {
         setIsDrawing(true);
         onActionStart?.();
-        if (activeTool !== "smartFill") {
-          handlePixelAction(indices.x, indices.y);
-        } else {
-          handlePixelAction(indices.x, indices.y);
-        }
+        handlePixelAction(indices.x, indices.y);
       }
     },
     [activeTool, getPixelIndexFromEvent, handlePixelAction, canSelectPoint, containerRef, onActionStart],
@@ -111,7 +117,9 @@ export const useMouseEvents = ({
         if (isSelecting && selectionStart && canSelectPoint(indices.x, indices.y)) {
           setSelectionEnd(indices);
         }
-      } else if (isDrawing && activeTool !== "smartFill") {
+      } else if (isDrawing && (activeTool === "line" || activeTool === "rectangle" || activeTool === "ellipse")) {
+        onShapeUpdate?.(indices);
+      } else if (isDrawing) {
         handlePixelAction(indices.x, indices.y);
       }
     },
@@ -161,6 +169,10 @@ export const useMouseEvents = ({
             setSelectionRect(null);
           }
         }
+      } else if (activeTool === "line" || activeTool === "rectangle" || activeTool === "ellipse") {
+        setIsDrawing(false);
+        onShapeComplete?.();
+        onActionEnd?.();
       } else {
         setIsDrawing(false);
         onActionEnd?.();

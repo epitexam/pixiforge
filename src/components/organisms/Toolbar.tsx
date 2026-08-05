@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useToolStore, Tool } from '../../stores/toolStore';
-import { PencilIcon, EraserIcon, PickerIcon, SelectIcon, GridIcon, FillIcon } from '../atoms/ToolIcons';
+import { PencilIcon, EraserIcon, PickerIcon, SelectIcon, GridIcon, FillIcon, LineIcon, RectIcon, CircleIcon } from '../atoms/ToolIcons';
 
 export interface ToolbarProps {
     orientation?: 'horizontal' | 'vertical';
@@ -12,6 +12,9 @@ const TOOLS: { id: Tool; label: string; icon: React.FC<{ className?: string }>; 
     { id: 'eraser', label: 'Eraser', icon: EraserIcon, shortcut: 'E' },
     { id: 'picker', label: 'Picker', icon: PickerIcon, shortcut: 'I' },
     { id: 'smartFill', label: 'Smart Fill', icon: FillIcon, shortcut: 'F' },
+    { id: 'line', label: 'Line', icon: LineIcon, shortcut: 'L' },
+    { id: 'rectangle', label: 'Rectangle', icon: RectIcon, shortcut: 'R' },
+    { id: 'ellipse', label: 'Ellipse', icon: CircleIcon, shortcut: 'C' },
     { id: 'select', label: 'Select', icon: SelectIcon, shortcut: 'S' },
     { id: 'tileSelect', label: 'Select Tile Area', icon: GridIcon, shortcut: 'T' },
 ];
@@ -34,6 +37,9 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                 case 'e': e.preventDefault(); setActiveTool('eraser'); break;
                 case 'i': e.preventDefault(); setActiveTool('picker'); break;
                 case 'f': e.preventDefault(); setActiveTool('smartFill'); break;
+                case 'l': e.preventDefault(); setActiveTool('line'); break;
+                case 'r': e.preventDefault(); setActiveTool('rectangle'); break;
+                case 'c': e.preventDefault(); setActiveTool('ellipse'); break;
                 case 's': e.preventDefault(); setActiveTool('select'); break;
                 case 't': e.preventDefault(); setActiveTool('tileSelect'); break;
                 default: break;
