@@ -5,6 +5,7 @@ import {
   useMemo,
   useRef,
   useState,
+  useEffect,
 } from "react";
 import { CanvasHandle } from "./canvas/types";
 import { DEFAULT_COLOR, useCanvasStore } from "../../stores/canvaStore";
@@ -89,6 +90,24 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(
     const lastMousePosRef = useGlobalMousePosition();
     const [shapeStart, setShapeStart] = useState<{ x: number; y: number } | null>(null);
     const [shapeEnd, setShapeEnd] = useState<{ x: number; y: number } | null>(null);
+
+    const lastPaintedPixelRef = useRef<{ x: number; y: number } | null>(null);
+    const isShiftPressed = useRef(false);
+
+    useEffect(() => {
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Shift') isShiftPressed.current = true;
+      };
+      const handleKeyUp = (e: KeyboardEvent) => {
+        if (e.key === 'Shift') isShiftPressed.current = false;
+      };
+      window.addEventListener('keydown', handleKeyDown);
+      window.addEventListener('keyup', handleKeyUp);
+      return () => {
+        window.removeEventListener('keydown', handleKeyDown);
+        window.removeEventListener('keyup', handleKeyUp);
+      };
+    }, []);
 
     const { scale, translateX, translateY, setTranslateX, setTranslateY } =
       useZoomPan({
@@ -227,20 +246,31 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(
           const maxX = Math.max(x1, x2);
           const minY = Math.min(y1, y2);
           const maxY = Math.max(y1, y2);
-          const rx = Math.max(1, Math.floor((maxX - minX) / 2));
-          const ry = Math.max(1, Math.floor((maxY - minY) / 2));
-          const cx = Math.floor((minX + maxX) / 2);
-          const cy = Math.floor((minY + maxY) / 2);
 
-          for (let y = minY; y <= maxY; y++) {
-            for (let x = minX; x <= maxX; x++) {
-              const normalizedX = (x - cx) / rx;
-              const normalizedY = (y - cy) / ry;
-              if (normalizedX * normalizedX + normalizedY * normalizedY <= 1) {
-                drawPoint(x, y);
-              }
-            }
+          const rx = (maxX - minX) / 2;
+          const ry = (maxY - minY) / 2;
+          const cx = minX + rx;
+          const cy = minY + ry;
+
+          if (rx < 1 && ry < 1) {
+            drawPoint(Math.round(cx), Math.round(cy));
+            return;
           }
+
+          const points = new Set<string>();
+          const steps = Math.max(16, Math.ceil((rx + ry) * Math.PI * 2));
+
+          for (let i = 0; i <= steps; i++) {
+            const t = (i / steps) * Math.PI * 2;
+            const px = Math.round(cx + Math.cos(t) * rx);
+            const py = Math.round(cy + Math.sin(t) * ry);
+            points.add(`${px},${py}`);
+          }
+
+          points.forEach(pt => {
+            const [px, py] = pt.split(',').map(Number);
+            drawPoint(px, py);
+          });
         };
 
         switch (activeTool) {
@@ -262,11 +292,11 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(
 
     const paintBrush = useCallback(
       (x: number, y: number, color: Color) => {
-        const radius = Math.max(1, Math.floor(brushSize / 2));
-        for (let dy = -radius; dy <= radius; dy++) {
-          for (let dx = -radius; dx <= radius; dx++) {
-            const px = x + dx;
-            const py = y + dy;
+        const halfSize = Math.floor(brushSize / 2);
+        for (let dy = 0; dy < brushSize; dy++) {
+          for (let dx = 0; dx < brushSize; dx++) {
+            const px = x - halfSize + dx;
+            const py = y - halfSize + dy;
             if (px < 0 || py < 0 || px >= effectiveWidth || py >= effectiveHeight) continue;
             if (tileModeEnabled && selectedTile) {
               if (!checkTileBounds(px, py)) continue;
@@ -276,6 +306,33 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(
         }
       },
       [brushSize, checkTileBounds, effectiveWidth, effectiveHeight, selectedTile, setPixel, tileModeEnabled],
+    );
+
+    const paintLine = useCallback(
+      (x0: number, y0: number, x1: number, y1: number, color: Color) => {
+        const dx = Math.abs(x1 - x0);
+        const dy = Math.abs(y1 - y0);
+        const sx = x0 < x1 ? 1 : -1;
+        const sy = y0 < y1 ? 1 : -1;
+        let err = dx - dy;
+        let currentX = x0;
+        let currentY = y0;
+
+        while (true) {
+          paintBrush(currentX, currentY, color);
+          if (currentX === x1 && currentY === y1) break;
+          const e2 = err * 2;
+          if (e2 > -dy) {
+            err -= dy;
+            currentX += sx;
+          }
+          if (e2 < dx) {
+            err += dx;
+            currentY += sy;
+          }
+        }
+      },
+      [paintBrush]
     );
 
     const handlePixelAction = useCallback(
@@ -292,10 +349,20 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(
 
         switch (activeTool) {
           case "pencil":
-            paintBrush(x, y, currentColor);
+            if (lastPaintedPixelRef.current) {
+              paintLine(lastPaintedPixelRef.current.x, lastPaintedPixelRef.current.y, x, y, currentColor);
+            } else {
+              paintBrush(x, y, currentColor);
+            }
+            lastPaintedPixelRef.current = { x, y };
             break;
           case "eraser":
-            paintBrush(x, y, DEFAULT_COLOR);
+            if (lastPaintedPixelRef.current) {
+              paintLine(lastPaintedPixelRef.current.x, lastPaintedPixelRef.current.y, x, y, DEFAULT_COLOR);
+            } else {
+              paintBrush(x, y, DEFAULT_COLOR);
+            }
+            lastPaintedPixelRef.current = { x, y };
             break;
           case "smartFill":
             fillArea(x, y, currentColor, (px, py) => {
@@ -314,8 +381,32 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(
             break;
         }
       },
-      [activeTool, currentColor, setPixel, getPixel, fillArea, setCurrentColor, tileModeEnabled, selectedTile, checkTileBounds, paintBrush],
+      [activeTool, currentColor, setPixel, getPixel, fillArea, setCurrentColor, tileModeEnabled, selectedTile, checkTileBounds, paintBrush, paintLine],
     );
+
+    const constrainPoint = (start: { x: number, y: number }, end: { x: number, y: number }, tool: string) => {
+      if (tool === 'line') {
+        const dx = end.x - start.x;
+        const dy = end.y - start.y;
+        const angle = Math.atan2(dy, dx);
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        const snappedAngle = Math.round(angle / (Math.PI / 4)) * (Math.PI / 4);
+        return {
+          x: Math.round(start.x + Math.cos(snappedAngle) * dist),
+          y: Math.round(start.y + Math.sin(snappedAngle) * dist),
+        };
+      } else {
+        const dx = Math.abs(end.x - start.x);
+        const dy = Math.abs(end.y - start.y);
+        const size = Math.max(dx, dy);
+        return {
+          x: start.x + (end.x > start.x ? size : -size),
+          y: start.y + (end.y > start.y ? size : -size),
+        };
+      }
+    };
+
+    const isShapeTool = ["line", "rectangle", "ellipse"].includes(activeTool);
 
     const {
       isSelecting,
@@ -339,21 +430,32 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(
       currentTranslateX: translateX,
       currentTranslateY: translateY,
       onActionStart: () => {
-        beginAction();
+        if (!isShapeTool) {
+          beginAction();
+        }
+        lastPaintedPixelRef.current = null;
       },
       onActionEnd: () => {
-        commitAction();
+        if (!isShapeTool) {
+          commitAction();
+        }
       },
       onShapeStart: (point) => {
         setShapeStart(point);
         setShapeEnd(point);
       },
       onShapeUpdate: (point) => {
-        setShapeEnd(point);
+        if (isShiftPressed.current && shapeStart) {
+          setShapeEnd(constrainPoint(shapeStart, point, activeTool));
+        } else {
+          setShapeEnd(point);
+        }
       },
       onShapeComplete: () => {
         if (shapeStart && shapeEnd) {
+          beginAction();
           drawShape(shapeStart, shapeEnd);
+          commitAction();
         }
         setShapeStart(null);
         setShapeEnd(null);
@@ -409,6 +511,64 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(
     }, [activeTool, isSelecting, selectionStart, selectionEnd]);
 
     const staticRect = useMemo(() => selectionRect, [selectionRect]);
+
+    const shapePreview = useMemo(() => {
+      if (!shapeStart || !shapeEnd || !["line", "rectangle", "ellipse"].includes(activeTool)) return null;
+
+      if (activeTool === 'line') {
+        const x1 = shapeStart.x, y1 = shapeStart.y;
+        const x2 = shapeEnd.x, y2 = shapeEnd.y;
+        const cx = ((x1 + x2) / 2 + 0.5) * cellSize * scale + translateX;
+        const cy = ((y1 + y2) / 2 + 0.5) * cellSize * scale + translateY;
+        const dx = (x2 - x1) * cellSize * scale;
+        const dy = (y2 - y1) * cellSize * scale;
+        const length = Math.sqrt(dx * dx + dy * dy);
+        const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+        const thickness = Math.max(2, brushSize * cellSize * scale);
+
+        return (
+          <div
+            className="absolute pointer-events-none z-20"
+            style={{
+              left: cx, top: cy, width: length, height: `${thickness}px`,
+              backgroundColor: currentColor,
+              opacity: 0.6,
+              transform: `translate(-50%, -50%) rotate(${angle}deg)`,
+              borderRadius: '2px',
+            }}
+          />
+        );
+      }
+
+      const minX = Math.min(shapeStart.x, shapeEnd.x);
+      const minY = Math.min(shapeStart.y, shapeEnd.y);
+      const width = Math.abs(shapeEnd.x - shapeStart.x) + 1;
+      const height = Math.abs(shapeEnd.y - shapeStart.y) + 1;
+
+      const left = minX * cellSize * scale + translateX;
+      const top = minY * cellSize * scale + translateY;
+      const w = width * cellSize * scale;
+      const h = height * cellSize * scale;
+
+      const isEllipse = activeTool === 'ellipse';
+
+      return (
+        <div
+          className="absolute pointer-events-none z-20"
+          style={{
+            left,
+            top,
+            width: w,
+            height: h,
+            border: `2px solid ${currentColor}`,
+            backgroundColor: 'transparent',
+            borderRadius: isEllipse ? '50%' : '0px',
+            boxSizing: 'border-box',
+            opacity: 0.8,
+          }}
+        />
+      );
+    }, [activeTool, brushSize, cellSize, currentColor, scale, shapeStart, shapeEnd, translateX, translateY]);
 
     const tileOverlay = useMemo(() => {
       if (!tileModeEnabled || !selectedTile) return null;
@@ -493,6 +653,9 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(
         case "picker":
         case "tileSelect":
         case "tileStamp":
+        case "line":
+        case "rectangle":
+        case "ellipse":
           return "crosshair";
         default:
           return "default";
@@ -612,6 +775,8 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(
           ref={canvasRef}
           style={canvasStyle}
         />
+        {shapePreview}
+
         <SelectionOverlay
           rect={activeRect}
           cellSize={cellSize}
