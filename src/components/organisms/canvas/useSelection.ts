@@ -21,6 +21,7 @@ export const useSelection = (
 
   const [selectionRect, setSelectionRect] = useState<Rect | null>(null);
   const [copiedPixels, setCopiedPixels] = useState<Color[][] | null>(null);
+  const [selectionDragOffset, setSelectionDragOffset] = useState<{ x: number; y: number } | null>(null);
 
   const isPointInSelection = useCallback(
     (x: number, y: number): boolean => {
@@ -81,6 +82,38 @@ export const useSelection = (
     [copiedPixels, setPixel, effectiveWidth, effectiveHeight, canEditPixel]
   );
 
+  const moveSelection = useCallback((targetX: number, targetY: number) => {
+    if (!selectionRect || !copiedPixels) return;
+    const width = copiedPixels[0].length;
+    const height = copiedPixels.length;
+    const currentPixels = copiedPixels;
+
+    const clearSelection = () => {
+      for (let dy = 0; dy < selectionRect.height; dy++) {
+        for (let dx = 0; dx < selectionRect.width; dx++) {
+          const px = selectionRect.x + dx;
+          const py = selectionRect.y + dy;
+          if (px >= 0 && py >= 0 && px < effectiveWidth && py < effectiveHeight && canEditPixel(px, py)) {
+            setPixel(px, py, DEFAULT_COLOR);
+          }
+        }
+      }
+    };
+
+    clearSelection();
+    for (let dy = 0; dy < height; dy++) {
+      for (let dx = 0; dx < width; dx++) {
+        const px = targetX + dx;
+        const py = targetY + dy;
+        if (px >= 0 && py >= 0 && px < effectiveWidth && py < effectiveHeight && canEditPixel(px, py)) {
+          setPixel(px, py, currentPixels[dy][dx]);
+        }
+      }
+    }
+    setSelectionRect({ x: targetX, y: targetY, width, height });
+    toast.success('Selection moved');
+  }, [selectionRect, copiedPixels, setPixel, effectiveWidth, effectiveHeight, canEditPixel]);
+
   const pasteAtMouse = useCallback(() => {
     const mousePos = mousePosRef.current;
     if (!mousePos) {
@@ -103,9 +136,12 @@ export const useSelection = (
     selectionRect,
     setSelectionRect,
     copiedPixels,
+    selectionDragOffset,
+    setSelectionDragOffset,
     isPointInSelection,
     copySelection,
     pasteSelection,
     pasteAtMouse,
+    moveSelection,
   };
 };
