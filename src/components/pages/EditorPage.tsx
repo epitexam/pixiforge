@@ -11,6 +11,8 @@ import { CustomColorIcon } from '../atoms/PaletteIcons';
 import { useCanvasStore } from '../../stores/canvaStore';
 import { CanvasHandle } from '../organisms/canvas/types';
 import { TileControls } from '../molecules/TileControls';
+import { BrushSizeControl } from '../molecules/BrushSizeControl';
+import { LayerPanel } from '../molecules/LayerPanel';
 import { useZoom, useExport, useClipboard, usePaletteActions } from '../../hooks';
 import { ExportOptions } from '../../hooks/useExport';
 import { usePaletteStore } from '../../stores/paletteStore';
@@ -31,6 +33,7 @@ export const EditorPage: React.FC = () => {
     const [showExportModal, setShowExportModal] = useState(false);
     const [showSidebar, setShowSidebar] = useState(false);
     const [showActiveColorModal, setShowActiveColorModal] = useState(false);
+    const [brushSize, setBrushSize] = useState(1);
 
     const { scale, translateX, translateY, setScale, setTranslateX, setTranslateY, handleZoomIn, handleZoomOut, handleZoomReset } = useZoom();
     const { exportCanvas } = useExport();
@@ -151,6 +154,18 @@ export const EditorPage: React.FC = () => {
 
                     <div className="flex-1 min-h-0 overflow-y-auto p-4 flex flex-col gap-6">
                         <div className="flex flex-col gap-3">
+                            <BrushSizeControl value={brushSize} onChange={setBrushSize} />
+                        </div>
+
+                        <div className="w-full h-px bg-[#2a2a2a]" />
+
+                        <div className="flex flex-col gap-3">
+                            <LayerPanel />
+                        </div>
+
+                        <div className="w-full h-px bg-[#2a2a2a]" />
+
+                        <div className="flex flex-col gap-3">
                             <span className="text-[10px] font-semibold tracking-[0.2em] text-gray-600 uppercase">Palette</span>
                             <Palette
                                 colors={paletteColors}
@@ -211,6 +226,7 @@ export const EditorPage: React.FC = () => {
                             cellSize={cellSize}
                             scale={scale}
                             onScaleChange={setScale}
+                            brushSize={brushSize}
                             translateX={translateX}
                             onTranslateXChange={setTranslateX}
                             translateY={translateY}
